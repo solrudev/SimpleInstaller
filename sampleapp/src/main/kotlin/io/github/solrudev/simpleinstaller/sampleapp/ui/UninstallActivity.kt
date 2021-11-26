@@ -40,7 +40,7 @@ class UninstallActivity : AppCompatActivity() {
 					adapter.submitList(it)
 				}
 			}
-			loadApps()
+			if (savedInstanceState == null) loadApps()
 		}
 	}
 
