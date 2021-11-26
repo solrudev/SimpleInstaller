@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	package="io.github.solrudev.simpleinstaller">
+
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+		tools:ignore="ScopedStorage" />
+	<uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+	<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+	<uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+	<uses-permission android:name="android.permission.VIBRATE" />
+
+	<application>
+		<activity
+			android:name=".PackageUninstaller$UninstallLauncherActivity"
+			android:exported="false"
+			android:launchMode="singleTask"
+			android:showForAllUsers="true"
+			android:showOnLockScreen="true"
+			android:showWhenLocked="true"
+			tools:ignore="UnusedAttribute" />
+		<activity
+			android:name=".PackageInstaller$InstallLauncherActivity"
+			android:exported="false"
+			android:launchMode="singleTask"
+			android:showForAllUsers="true"
+			android:showOnLockScreen="true"
+			android:showWhenLocked="true"
+			tools:ignore="UnusedAttribute" />
+
+		<receiver
+			android:name=".InstallationEventsReceiver"
+			android:exported="false" />
+
+	</application>
+</manifest>

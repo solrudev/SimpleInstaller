@@ -1,0 +1,11 @@
+<resources>
+	<string name="app_name" translatable="false">SimpleInstaller</string>
+	<string name="app_icon_content_description" translatable="false">App icon</string>
+	<string name="install">Install</string>
+	<string name="uninstall">Uninstall</string>
+	<string name="cancel">Cancel</string>
+	<string name="installed_successfully">Installed successfully.</string>
+	<string name="install_failed">Install failed.</string>
+	<string name="install_canceled">Install canceled.</string>
+	<string name="installing">Installing…</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="ssi_prompt_install_message">Please confirm installation.</string>
+	<string name="ssi_prompt_install_title">Installation</string>
+	<string name="ssi_prompt_uninstall_message">Please confirm uninstallation.</string>
+	<string name="ssi_prompt_uninstall_title">Uninstallation</string>
+	<string name="ssi_notification_channel_id" translatable="false">SimpleInstaller_NotificationChannel</string>
+	<string name="ssi_notification_channel_description">Turning this off breaks package install functionality</string>
+	<string name="ssi_notification_channel_name">Install and uninstall</string>
+</resources>
