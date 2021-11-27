@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
 		binding.lifecycleOwner = this
 		binding.activity = this
 		binding.viewModel = viewModel
-		requestInstallPermission()
+		if (savedInstanceState == null) requestInstallPermission()
 	}
 
 	fun onInstallButtonClick() {
