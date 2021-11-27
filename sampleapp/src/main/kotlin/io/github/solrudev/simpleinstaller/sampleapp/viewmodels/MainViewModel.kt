@@ -21,6 +21,7 @@ class MainViewModel : ViewModel() {
 	private val _progressMax = MutableStateFlow(100)
 	private val _isProgressIndeterminate = MutableStateFlow(false)
 	private val _text = MutableStateFlow(R.string.app_name)
+	private val _isInstallEnabled = MutableStateFlow(false)
 	private val _installButtonText = MutableStateFlow(R.string.install)
 	private val _uninstallButtonText = MutableStateFlow(R.string.uninstall)
 
@@ -28,6 +29,7 @@ class MainViewModel : ViewModel() {
 	val progressMax = _progressMax.asStateFlow()
 	val isProgressIndeterminate = _isProgressIndeterminate.asStateFlow()
 	val text = _text.asStateFlow()
+	val isInstallEnabled = _isInstallEnabled.asStateFlow()
 	val installButtonText = _installButtonText.asStateFlow()
 	val uninstallButtonText = _uninstallButtonText.asStateFlow()
 	val isInstalling get() = PackageInstaller.hasActiveSession
@@ -40,6 +42,10 @@ class MainViewModel : ViewModel() {
 				_isProgressIndeterminate.value = it.isIndeterminate
 			}
 		}
+	}
+
+	fun enableInstallButton() {
+		_isInstallEnabled.value = true
 	}
 
 	fun installPackage(uri: Uri) {

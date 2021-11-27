@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
 	@RequiresApi(Build.VERSION_CODES.O)
 	private val requestInstallPermissionLauncher = registerForActivityResult(InstallPermissionContract()) {
-		binding.installButton.isEnabled = it
+		if (it) viewModel.enableInstallButton()
 	}
 
 	private val pickApkLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) {
@@ -53,11 +53,11 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun requestInstallPermission() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			binding.installButton.isEnabled = packageManager.canRequestPackageInstalls()
-			if (!packageManager.canRequestPackageInstalls()) {
-				requestInstallPermissionLauncher.launch(Unit)
-			}
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+		if (packageManager.canRequestPackageInstalls()) {
+			viewModel.enableInstallButton()
+		} else {
+			requestInstallPermissionLauncher.launch(Unit)
 		}
 	}
 }
