@@ -34,7 +34,7 @@ import kotlin.coroutines.resume
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
 private const val TEMP_FILE_NAME = "temp.apk"
 private const val REQUEST_CODE = 6541
-private const val ACTION_INSTALLATION_STATUS = "solrudev.simpleinstaller.INSTALLATION_STATUS"
+private const val ACTION_INSTALLATION_STATUS = "io.github.solrudev.simpleinstaller.INSTALLATION_STATUS"
 
 /**
  * A singleton which provides Android packages install functionality.
