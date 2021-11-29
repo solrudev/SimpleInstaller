@@ -36,6 +36,9 @@ private const val TEMP_FILE_NAME = "temp.apk"
 private const val REQUEST_CODE = 6541
 private const val ACTION_INSTALLATION_STATUS = "solrudev.simpleinstaller.INSTALLATION_STATUS"
 
+/**
+ * A singleton which provides Android packages install functionality.
+ */
 object PackageInstaller {
 
 	/**

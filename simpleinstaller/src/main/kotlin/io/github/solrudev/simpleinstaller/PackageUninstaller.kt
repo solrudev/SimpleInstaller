@@ -18,6 +18,9 @@ import kotlin.coroutines.resume
 private const val PACKAGE_NAME_KEY = "PACKAGE_UNINSTALLER_PACKAGE_NAME"
 private const val REQUEST_CODE = 4127
 
+/**
+ * A singleton which provides Android packages uninstall functionality.
+ */
 object PackageUninstaller {
 
 	/**

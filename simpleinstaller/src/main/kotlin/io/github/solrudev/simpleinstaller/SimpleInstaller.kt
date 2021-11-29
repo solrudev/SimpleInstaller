@@ -9,6 +9,9 @@ import io.github.solrudev.simpleinstaller.exceptions.SimpleInstallerReinitialize
 import io.github.solrudev.simpleinstaller.utils.notificationManager
 import io.github.solrudev.simpleinstaller.utils.requireContextNotNull
 
+/**
+ * Easy to use abstraction over Android packages install and uninstall functionality leveraging Kotlin coroutines.
+ */
 object SimpleInstaller {
 
 	private var _applicationContext: Context? = null
@@ -24,7 +27,7 @@ object SimpleInstaller {
 	/**
 	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
 	 *
-	 * This should be called in your Application class' `onCreate()` method.
+	 * This should be called in your Application class' [android.app.Application.onCreate] method.
 	 *
 	 * Example: `SimpleInstaller.initialize(this)`
 	 */
