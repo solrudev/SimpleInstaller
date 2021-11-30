@@ -7,7 +7,7 @@ SimpleInstaller is an Android library which provides easy to use abstraction ove
 
 It supports Android versions starting from 4.1 Jelly Bean. Package installer provides a Kotlin SharedFlow property which can be collected for installation progress updates. Split packages installation is also supported (note that this is only available on Android versions starting from 5.0 Lollipop).
 
-SimpleInstaller was developed with background execution in the mind. You can launch an install or uninstall session from background, for example, while foreground service is running and your application was removed from recents. The way it works is that the user is shown a high-priority notification which launches a standard Android confirmation by clicking on it, or full-screen intent with confirmation (depends on firmware). 
+SimpleInstaller was developed with background execution in mind. You can launch an install or uninstall session from background, for example, while foreground service is running and your application was removed from recents. The way it works is that the user is shown a high-priority notification which launches a standard Android confirmation by clicking on it, or full-screen intent with confirmation (depends on firmware). 
 
 ## Gradle dependencies
 All versions are available [here](https://s01.oss.sonatype.org/#nexus-search;gav~io.github.solrudev~simpleinstaller~~~).
