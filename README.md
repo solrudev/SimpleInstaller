@@ -16,7 +16,6 @@ implementation("io.github.solrudev:simpleinstaller:1.0.0")
 ```
 
 ## Usage
-
 First, you need to initialize SimpleInstaller. To do this, add the following line to your Application class' `onCreate()` method:
 ```kotlin
 SimpleInstaller.initialize(this)
@@ -38,6 +37,9 @@ URIs must have `file:` or `content:` scheme. These methods return an `InstallRes
 suspend fun PackageUninstaller.uninstallPackage(packageName: String): Boolean
 ```
 Returns true if uninstall succeeded, false otherwise.
+
+### Install permission
+On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. There's also `InstallPermissionContract` in `activityresult` package which you can use to request user to turn on install from unknown sources for your app.
 
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application selected from the installed apps list. Go [here](https://github.com/solrudev/SimpleInstaller/tree/master/sampleapp) to see sources.
