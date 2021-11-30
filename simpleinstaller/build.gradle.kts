@@ -46,14 +46,14 @@ android {
 }
 
 dependencies {
-	val coroutinesVersion = "1.5.2-native-mt"
+	val coroutinesVersion = "1.5.2"
 	api("androidx.activity:activity-ktx:1.4.0")
 	api("androidx.core:core-ktx:1.7.0")
 	api("androidx.appcompat:appcompat:1.4.0")
 	api("com.google.android.material:material:1.4.0")
 	api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
-	implementation("com.squareup.okio:okio:2.10.0")
+	implementation("com.squareup.okio:okio:3.0.0")
 }
 
 tasks {
