@@ -39,7 +39,18 @@ suspend fun PackageUninstaller.uninstallPackage(packageName: String): Boolean
 Returns true if uninstall succeeded, false otherwise.
 
 ### Install permission
-On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. But relying on this is not recommended, because your app will be restarted if user chooses Always allow, so the result and progress won't be received anymore. There's `InstallPermissionContract` in `activityresult` package which you can use to request user to turn on install from unknown sources for your app.
+On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. There's also `InstallPermissionContract` in `activityresult` package which you can use to request user to turn on install from unknown sources for your app.
+
+In your Activity:
+```kotlin
+val requestInstallPermissionLauncher = registerForActivityResult(InstallPermissionContract()) { booleanResult ->
+    if (booleanResult) { /* do something */ }
+}
+```
+...
+```kotlin
+requestInstallPermissionLauncher.launch(Unit)
+```
 
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application selected from the installed apps list. Go [here](https://github.com/solrudev/SimpleInstaller/tree/master/sampleapp) to see sources.
