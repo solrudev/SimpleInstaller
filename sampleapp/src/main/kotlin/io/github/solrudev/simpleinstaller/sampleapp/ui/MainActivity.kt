@@ -53,7 +53,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun requestInstallPermission() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			viewModel.enableInstallButton()
+			return
+		}
 		if (packageManager.canRequestPackageInstalls()) {
 			viewModel.enableInstallButton()
 		} else {
