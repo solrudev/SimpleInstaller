@@ -38,7 +38,7 @@ object SimpleInstaller {
 		if (_applicationContext != null) {
 			throw SimpleInstallerReinitializeException()
 		}
-		_applicationContext = applicationContext
+		_applicationContext = applicationContext.applicationContext
 		SimpleInstaller.notificationIconId = notificationIconId
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val channelIdString = SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_id)
