@@ -1,6 +1,6 @@
 val publishGroupId = "io.github.solrudev"
 val publishArtifactId = "simpleinstaller"
-val publishVersion = "1.0.0"
+val publishVersion = "1.0.1"
 
 plugins {
 	id("com.android.library")
