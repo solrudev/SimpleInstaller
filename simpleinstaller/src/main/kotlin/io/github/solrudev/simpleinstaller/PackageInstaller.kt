@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +32,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
+
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
 private const val TEMP_FILE_NAME = "temp.apk"
@@ -56,7 +59,7 @@ object PackageInstaller {
 	/**
 	 * A [SharedFlow] of [ProgressData] which represents installation progress.
 	 */
-	val progress: SharedFlow<ProgressData> = _progress.asSharedFlow()
+	val progress = _progress.asSharedFlow()
 
 	/**
 	 * Starts an install session, displays a full-screen intent or notification (depending on firmware)
@@ -91,7 +94,7 @@ object PackageInstaller {
 	private var NOTIFICATION_ID = 18475
 
 	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
-	private val contract = ActionInstallPackageContract()
+	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private var activityFirstCreated = true
 	private val tempApk by lazy { File(SimpleInstaller.applicationContext.externalCacheDir, TEMP_FILE_NAME) }
 
@@ -117,13 +120,17 @@ object PackageInstaller {
 			if (intent.action != ACTION_INSTALLATION_STATUS) {
 				return
 			}
+			val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
 			val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
 			if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-				val confirmationIntent = intent
-					.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-					?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+				val confirmationIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+//					?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 				if (confirmationIntent != null) {
-					context.startActivity(confirmationIntent)
+					val wrapperIntent = Intent(context, InstallLauncherActivity::class.java)
+						.putExtra(Intent.EXTRA_INTENT, confirmationIntent)
+						.putExtra(PackageInstaller.EXTRA_SESSION_ID, sessionId)
+						.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+					context.startActivity(wrapperIntent)
 				} else {
 					capturedContinuation.cancel(IllegalArgumentException("confirmationIntent was null."))
 				}
@@ -132,7 +139,6 @@ object PackageInstaller {
 			val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
 			val otherPackageName = intent.getStringExtra(PackageInstaller.EXTRA_OTHER_PACKAGE_NAME)
 			val storagePath = intent.getStringExtra(PackageInstaller.EXTRA_STORAGE_PATH)
-			localBroadcastManager.unregisterReceiver(this)
 			finishInstallation(InstallResult.getFromStatusCode(status, message, otherPackageName, storagePath))
 		}
 	}
@@ -141,13 +147,16 @@ object PackageInstaller {
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP) object : PackageInstaller.SessionCallback() {
 			override fun onCreated(sessionId: Int) {}
 			override fun onBadgingChanged(sessionId: Int) {}
-			override fun onActiveChanged(sessionId: Int, active: Boolean) {}
+			override fun onActiveChanged(sessionId: Int, active: Boolean) {
+				Log.d("SSI PI", "isActive: $active")
+			}
 
 			override fun onProgressChanged(sessionId: Int, progress: Float) {
 				_progress.tryEmit((progress * 100).toInt(), 100)
 			}
 
 			override fun onFinished(sessionId: Int, success: Boolean) {
+				Log.d("SSI PI", "onFinished: $success")
 				packageInstaller.unregisterSessionCallback(this)
 			}
 		}
@@ -334,57 +343,59 @@ object PackageInstaller {
 
 	class InstallLauncherActivity : AppCompatActivity() {
 
-		private var onRestartCalled = false
-
-		private val installLauncher = registerForActivityResult(contract) {
+		private val actionInstallPackageLauncher = registerForActivityResult(actionInstallPackageContract) {
 			val result = if (it) InstallResult.Success else InstallResult.Failure()
 			finishInstallation(result)
+		}
+
+		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+		private val confirmationLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+			intent?.extras?.getInt(PackageInstaller.EXTRA_SESSION_ID)?.let {
+				packageInstaller.getSessionInfo(it)?.let sessionInfo@ { sessionInfo ->
+					if (sessionInfo.isActive && capturedContinuation.isActive) {
+						finishInstallation(InstallResult.Failure())
+						return@let
+					}
+				}
+				Log.d("SSI PI", "InstallLauncherActivity sessionInfo was null")
+				finish()
+			}
 		}
 
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
-			if (activityFirstCreated && !isRestarted(savedInstanceState)) {
+			if (activityFirstCreated && savedInstanceState == null) {
 				activityFirstCreated = false
 				activityLaunchedContinuation?.resume(Unit)
-			}
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				onRestartCalled = false
-				finish()
-				return
 			}
 			lifecycleScope.launchWhenResumed {
 				installFinishedCallback.collect { finish() }
 			}
-			if (isRestarted(savedInstanceState)) {
-				onRestartCalled = false
+			if (savedInstanceState != null) {
+				return
+			}
+			if (usePackageInstallerApi) {
+				intent?.extras?.getParcelable<Intent>(Intent.EXTRA_INTENT)?.let {
+					confirmationLauncher.launch(it)
+				}
 				return
 			}
 			val apkUri = intent.extras?.getParcelable<Uri>(APK_URI_KEY)
-			installLauncher.launch(apkUri)
+			actionInstallPackageLauncher.launch(apkUri)
 		}
 
-		override fun onRestart() {
-			super.onRestart()
-			onRestartCalled = true
-		}
-
-		override fun onSaveInstanceState(outState: Bundle) {
-			super.onSaveInstanceState(outState)
-			outState.putBoolean(KEY_RECREATED, true)
+		override fun onNewIntent(intent: Intent?) {
+			super.onNewIntent(intent)
+			Log.d("SSI PI", "onNewIntent")
+			startActivity(intent)
+			finish()
 		}
 
 		override fun onDestroy() {
 			super.onDestroy()
-			activityFirstCreated = false
+			Log.d("SSI PI", "onDestroy")
 			clearTurnScreenOnSettings()
-		}
-
-		private fun isRestarted(savedInstanceState: Bundle?) =
-			savedInstanceState?.getBoolean(KEY_RECREATED) == true || onRestartCalled
-
-		companion object {
-			private const val KEY_RECREATED = "RECREATED"
 		}
 	}
 }
