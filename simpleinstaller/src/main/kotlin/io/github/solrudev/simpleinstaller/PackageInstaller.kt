@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
@@ -32,7 +31,6 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
-
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
 private const val TEMP_FILE_NAME = "temp.apk"
@@ -124,7 +122,6 @@ object PackageInstaller {
 			val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
 			if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
 				val confirmationIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-//					?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 				if (confirmationIntent != null) {
 					val wrapperIntent = Intent(context, InstallLauncherActivity::class.java)
 						.putExtra(Intent.EXTRA_INTENT, confirmationIntent)
@@ -147,17 +144,11 @@ object PackageInstaller {
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP) object : PackageInstaller.SessionCallback() {
 			override fun onCreated(sessionId: Int) {}
 			override fun onBadgingChanged(sessionId: Int) {}
-			override fun onActiveChanged(sessionId: Int, active: Boolean) {
-				Log.d("SSI PI", "isActive: $active")
-			}
+			override fun onActiveChanged(sessionId: Int, active: Boolean) {}
+			override fun onFinished(sessionId: Int, success: Boolean) {}
 
 			override fun onProgressChanged(sessionId: Int, progress: Float) {
 				_progress.tryEmit((progress * 100).toInt(), 100)
-			}
-
-			override fun onFinished(sessionId: Int, success: Boolean) {
-				Log.d("SSI PI", "onFinished: $success")
-				packageInstaller.unregisterSessionCallback(this)
 			}
 		}
 	}
@@ -168,10 +159,10 @@ object PackageInstaller {
 		}
 		val capturedCoroutineContext = coroutineContext
 		return suspendCancellableCoroutine { continuation ->
-			var session: PackageInstaller.Session? = null
+			var sessionId = -1
 			continuation.invokeOnCancellation {
 				if (usePackageInstallerApi) {
-					abandonSession(session)
+					abandonSession(sessionId)
 				}
 				onCancellation()
 			}
@@ -192,7 +183,7 @@ object PackageInstaller {
 							else -> throw UnsupportedUriSchemeException(apkFiles.first())
 						}
 						_progress.makeIndeterminate()
-						displayNotification(apkUri)
+						displayNotification(apkUri = apkUri)
 						return@launch
 					}
 					apkFiles.forEach {
@@ -208,29 +199,13 @@ object PackageInstaller {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 						sessionParams.setInstallReason(PackageManager.INSTALL_REASON_USER)
 					}
-					val sessionId = packageInstaller.createSession(sessionParams)
-					session = packageInstaller.openSession(sessionId)
-					session!!.use {
+					sessionId = packageInstaller.createSession(sessionParams)
+					packageInstaller.openSession(sessionId).use {
 						withContext(Dispatchers.Main) {
 							packageInstaller.registerSessionCallback(packageInstallerSessionObserver)
 						}
 						it.copyApksFrom(*apkFiles)
-						val intent = Intent(
-							SimpleInstaller.applicationContext,
-							InstallationEventsReceiver::class.java
-						).apply {
-							action = ACTION_INSTALLATION_STATUS
-						}
-						val pendingIntent = PendingIntent.getBroadcast(
-							SimpleInstaller.applicationContext,
-							REQUEST_CODE,
-							intent,
-							pendingIntentUpdateCurrentFlags
-						)
-						val statusReceiver = pendingIntent.intentSender
-						displayNotification()
-						waitUntilActivityLaunched()
-						it.commit(statusReceiver)
+						displayNotification(sessionId = sessionId)
 					}
 				} catch (e: Throwable) {
 					continuation.cancel(e)
@@ -285,8 +260,8 @@ object PackageInstaller {
 		uri.scheme == ContentResolver.SCHEME_FILE || uri.scheme == ContentResolver.SCHEME_CONTENT
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	private fun abandonSession(session: PackageInstaller.Session?) = try {
-		session?.abandon()
+	private fun abandonSession(sessionId: Int) = try {
+		packageInstaller.abandonSession(sessionId)
 	} catch (_: Throwable) {
 	}
 
@@ -313,11 +288,14 @@ object PackageInstaller {
 		capturedContinuation.resume(result)
 	}
 
-	private fun displayNotification(apkUri: Uri? = null) {
+	private fun displayNotification(sessionId: Int? = null, apkUri: Uri? = null) {
 		val activityIntent = Intent(
 			SimpleInstaller.applicationContext,
 			InstallLauncherActivity::class.java
 		).apply {
+			if (usePackageInstallerApi && sessionId != null) {
+				putExtra(PackageInstaller.EXTRA_SESSION_ID, sessionId)
+			}
 			apkUri?.let { putExtra(APK_URI_KEY, it) }
 		}
 		val fullScreenIntent = PendingIntent.getActivity(
@@ -334,13 +312,6 @@ object PackageInstaller {
 		)
 	}
 
-	private var activityLaunchedContinuation: CancellableContinuation<Unit>? = null
-
-	private suspend inline fun waitUntilActivityLaunched() = suspendCancellableCoroutine<Unit> {
-		it.invokeOnCancellation { onCancellation() }
-		activityLaunchedContinuation = it
-	}
-
 	class InstallLauncherActivity : AppCompatActivity() {
 
 		private val actionInstallPackageLauncher = registerForActivityResult(actionInstallPackageContract) {
@@ -349,52 +320,78 @@ object PackageInstaller {
 		}
 
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-		private val confirmationLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-			intent?.extras?.getInt(PackageInstaller.EXTRA_SESSION_ID)?.let {
-				packageInstaller.getSessionInfo(it)?.let sessionInfo@ { sessionInfo ->
-					if (sessionInfo.isActive && capturedContinuation.isActive) {
-						finishInstallation(InstallResult.Failure())
-						return@let
+		private val confirmationIntentLauncher =
+			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+				intent.extras?.getInt(PackageInstaller.EXTRA_SESSION_ID)?.let main@{ sessionId ->
+					packageInstaller.getSessionInfo(sessionId)?.let { sessionInfo ->
+						// Hacky workaround: progress not going higher than 0.8 means install failed.
+						// This is needed to resume the coroutine with failure on reasons which are not
+						// handled in installationEventsReceiver. For example, "There was a problem
+						// parsing the package" error falls under that.
+						if (sessionInfo.progress < 0.81 && capturedContinuation.isActive) {
+							abandonSession(sessionId)
+							finishInstallation(InstallResult.Failure())
+							return@main
+						}
 					}
+					// If session doesn't exist anymore.
+					finish()
 				}
-				Log.d("SSI PI", "InstallLauncherActivity sessionInfo was null")
-				finish()
 			}
-		}
 
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
-			if (activityFirstCreated && savedInstanceState == null) {
-				activityFirstCreated = false
-				activityLaunchedContinuation?.resume(Unit)
-			}
 			lifecycleScope.launchWhenResumed {
 				installFinishedCallback.collect { finish() }
+			}
+			if (activityFirstCreated && savedInstanceState == null) {
+				activityFirstCreated = false
+				if (usePackageInstallerApi) {
+					commitSession()
+				}
 			}
 			if (savedInstanceState != null) {
 				return
 			}
 			if (usePackageInstallerApi) {
-				intent?.extras?.getParcelable<Intent>(Intent.EXTRA_INTENT)?.let {
-					confirmationLauncher.launch(it)
+				intent.extras?.getParcelable<Intent>(Intent.EXTRA_INTENT)?.let {
+					confirmationIntentLauncher.launch(it)
 				}
-				return
+			} else {
+				intent.extras?.getParcelable<Uri>(APK_URI_KEY)?.let {
+					actionInstallPackageLauncher.launch(it)
+				}
 			}
-			val apkUri = intent.extras?.getParcelable<Uri>(APK_URI_KEY)
-			actionInstallPackageLauncher.launch(apkUri)
+		}
+
+		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+		private fun commitSession() {
+			val receiverIntent = Intent(
+				SimpleInstaller.applicationContext,
+				InstallationEventsReceiver::class.java
+			).apply {
+				action = ACTION_INSTALLATION_STATUS
+			}
+			val receiverPendingIntent = PendingIntent.getBroadcast(
+				SimpleInstaller.applicationContext,
+				REQUEST_CODE,
+				receiverIntent,
+				pendingIntentUpdateCurrentFlags
+			)
+			val statusReceiver = receiverPendingIntent.intentSender
+			val sessionId = intent.extras?.getInt(PackageInstaller.EXTRA_SESSION_ID)
+			packageInstaller.openSession(sessionId!!).commit(statusReceiver)
 		}
 
 		override fun onNewIntent(intent: Intent?) {
 			super.onNewIntent(intent)
-			Log.d("SSI PI", "onNewIntent")
 			startActivity(intent)
 			finish()
 		}
 
 		override fun onDestroy() {
 			super.onDestroy()
-			Log.d("SSI PI", "onDestroy")
 			clearTurnScreenOnSettings()
 		}
 	}
