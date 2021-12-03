@@ -70,7 +70,7 @@ object PackageUninstaller {
 	private var NOTIFICATION_ID = 34187
 
 	private lateinit var capturedContinuation: Continuation<Boolean>
-	private val contract = UninstallPackageContract()
+	private val uninstallPackageContract = UninstallPackageContract()
 
 	private fun onCancellation() = try {
 		notificationManager.cancel(NOTIFICATION_ID)
@@ -81,9 +81,7 @@ object PackageUninstaller {
 
 	class UninstallLauncherActivity : AppCompatActivity() {
 
-		private var onRestartCalled = false
-
-		private val uninstallLauncher = registerForActivityResult(contract) {
+		private val uninstallLauncher = registerForActivityResult(uninstallPackageContract) {
 			onCancellation()
 			capturedContinuation.resume(it)
 			finish()
@@ -92,34 +90,14 @@ object PackageUninstaller {
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
-			if (isRestarted(savedInstanceState)) {
-				onRestartCalled = false
-				return
-			}
+			if (savedInstanceState != null) return
 			val packageName = intent.extras?.getString(PACKAGE_NAME_KEY)
 			uninstallLauncher.launch(packageName)
-		}
-
-		override fun onRestart() {
-			super.onRestart()
-			onRestartCalled = true
-		}
-
-		override fun onSaveInstanceState(outState: Bundle) {
-			super.onSaveInstanceState(outState)
-			outState.putBoolean(KEY_RECREATED, true)
 		}
 
 		override fun onDestroy() {
 			super.onDestroy()
 			clearTurnScreenOnSettings()
-		}
-
-		private fun isRestarted(savedInstanceState: Bundle?) =
-			savedInstanceState?.getBoolean(KEY_RECREATED) == true || onRestartCalled
-
-		companion object {
-			private const val KEY_RECREATED = "RECREATED"
 		}
 	}
 }
