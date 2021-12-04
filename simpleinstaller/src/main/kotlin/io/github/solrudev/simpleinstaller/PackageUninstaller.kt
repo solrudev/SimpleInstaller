@@ -79,7 +79,7 @@ object PackageUninstaller {
 		hasActiveSession = false
 	}
 
-	class UninstallLauncherActivity : AppCompatActivity() {
+	internal class UninstallLauncherActivity : AppCompatActivity() {
 
 		private val uninstallLauncher = registerForActivityResult(uninstallPackageContract) {
 			onCancellation()

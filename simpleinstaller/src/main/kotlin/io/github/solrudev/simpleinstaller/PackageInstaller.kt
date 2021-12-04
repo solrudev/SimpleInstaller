@@ -312,7 +312,7 @@ object PackageInstaller {
 		)
 	}
 
-	class InstallLauncherActivity : AppCompatActivity() {
+	internal class InstallLauncherActivity : AppCompatActivity() {
 
 		private val actionInstallPackageLauncher = registerForActivityResult(actionInstallPackageContract) {
 			val result = if (it) InstallResult.Success else InstallResult.Failure()
