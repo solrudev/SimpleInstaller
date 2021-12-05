@@ -255,11 +255,12 @@ object PackageInstaller {
 						if (apkFiles.size > 1) {
 							throw SplitPackagesNotSupportedException()
 						}
-						currentApkSources.add(apkFiles.first())
+						val apkFile = apkFiles.first()
+						currentApkSources.add(apkFile)
 						val progressJob = launch {
-							apkFiles.first().progress.collect { _progress.emit(it) }
+							apkFile.progress.collect { _progress.emit(it) }
 						}
-						val apkUri = apkFiles.first().getUri()
+						val apkUri = apkFile.getUri()
 						progressJob.cancel()
 						_progress.makeIndeterminate()
 						displayNotification(apkUri = apkUri)
