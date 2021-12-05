@@ -1,6 +1,6 @@
-val publishGroupId = "io.github.solrudev"
+val publishGroupId: String by rootProject.extra
+val publishVersion: String by rootProject.extra
 val publishArtifactId = "simpleinstaller"
-val publishVersion = "1.0.1"
 
 plugins {
 	id("com.android.library")
@@ -48,11 +48,10 @@ android {
 dependencies {
 	val coroutinesVersion = "1.5.2"
 	api("androidx.activity:activity-ktx:1.4.0")
-	api("androidx.core:core-ktx:1.7.0")
 	api("androidx.appcompat:appcompat:1.4.0")
-	api("com.google.android.material:material:1.4.0")
 	api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+	implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
 	implementation("com.squareup.okio:okio:3.0.0")
 }
 
@@ -69,7 +68,7 @@ tasks {
 	afterEvaluate {
 		publishing {
 			publications {
-				create("release", MavenPublication::class) {
+				create<MavenPublication>("release") {
 					groupId = publishGroupId
 					artifactId = publishArtifactId
 					version = publishVersion

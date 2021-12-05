@@ -1,6 +1,11 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+val publishGroupId by extra("io.github.solrudev")
+val publishVersion by extra("1.1.0-SNAPSHOT")
+group = publishGroupId
+version = publishVersion
+
 plugins {
 	id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
@@ -34,6 +39,7 @@ if (secretPropertiesFile.exists()) {
 		forEach { name, value -> extra[name as String] = value }
 	}
 }
+
 extra["ossrhUsername"] =
 	System.getenv("OSSRH_USERNAME") ?: extra["ossrhUsername"]
 extra["ossrhPassword"] =
