@@ -171,6 +171,7 @@ object PackageInstaller {
 
 	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
 	private val actionInstallPackageContract = ActionInstallPackageContract()
+	private val currentApkSources = mutableListOf<ApkSource>()
 	private var activityFirstCreated = true
 
 	private val installFinishedCallback = MutableSharedFlow<Unit>(
@@ -241,7 +242,6 @@ object PackageInstaller {
 				if (usePackageInstallerApi) {
 					abandonSession(sessionId)
 				}
-				apkFiles.forEach { it.clearTempFiles() }
 				onCancellation()
 			}
 			capturedContinuation = continuation
@@ -255,6 +255,7 @@ object PackageInstaller {
 						if (apkFiles.size > 1) {
 							throw SplitPackagesNotSupportedException()
 						}
+						currentApkSources.add(apkFiles.first())
 						val progressJob = launch {
 							apkFiles.first().progress.collect { _progress.emit(it) }
 						}
@@ -264,6 +265,7 @@ object PackageInstaller {
 						displayNotification(apkUri = apkUri)
 						return@launch
 					}
+					currentApkSources.addAll(apkFiles)
 					localBroadcastManager.registerReceiver(
 						installationEventsReceiver,
 						IntentFilter(ACTION_INSTALLATION_STATUS)
@@ -329,6 +331,8 @@ object PackageInstaller {
 			packageInstaller.unregisterSessionCallback(packageInstallerSessionObserver)
 			localBroadcastManager.unregisterReceiver(installationEventsReceiver)
 		}
+		currentApkSources.forEach { it.clearTempFiles() }
+		currentApkSources.clear()
 		notificationManager.cancel(NOTIFICATION_ID)
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
