@@ -74,53 +74,6 @@ object PackageInstaller {
 	 * Attempting to use this method on these versions will produce [SplitPackagesNotSupportedException].
 	 *
 	 * It is safe to call on main thread. Supports cancellation.
-	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	suspend fun installSplitPackage(vararg apkFiles: Uri): InstallResult {
-		if (!usePackageInstallerApi) {
-			throw SplitPackagesNotSupportedException()
-		}
-		apkFiles.forEach {
-			if (!isUriSupported(it)) {
-				throw UnsupportedUriSchemeException(it)
-			}
-		}
-		return installPackages(*apkFiles.toApkSourceArray())
-	}
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	suspend fun installSplitPackage(vararg apkFiles: AssetFileDescriptor): InstallResult {
-		if (!usePackageInstallerApi) {
-			throw SplitPackagesNotSupportedException()
-		}
-		return installPackages(*apkFiles.toApkSourceArray())
-	}
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [File] objects representing split APK files.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	suspend fun installSplitPackage(vararg apkFiles: File): InstallResult {
-		if (!usePackageInstallerApi) {
-			throw SplitPackagesNotSupportedException()
-		}
-		return installPackages(*apkFiles.toApkSourceArray())
-	}
-
-	/**
-	 * See [installSplitPackage].
-	 *
 	 * @param [apkFiles] any source of split APK files implemented by [ApkSource].
 	 * @return [InstallResult]
 	 */
@@ -133,14 +86,57 @@ object PackageInstaller {
 	}
 
 	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: Uri): InstallResult {
+		apkFiles.forEach {
+			if (!isUriSupported(it)) {
+				throw UnsupportedUriSchemeException(it)
+			}
+		}
+		return installSplitPackage(*apkFiles.toApkSourceArray())
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: AssetFileDescriptor) =
+		installSplitPackage(*apkFiles.toApkSourceArray())
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [File] objects representing split APK files.
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: File) = installSplitPackage(*apkFiles.toApkSourceArray())
+
+	/**
 	 * Starts an install session, displays a full-screen intent or notification (depending on firmware)
 	 * with prompting user to confirm installation and suspends until it finishes.
 	 *
 	 * It is safe to call on main thread. Supports cancellation.
+	 * @param [apkFile] any source of APK file implemented by [ApkSource].
+	 * @return [InstallResult]
+	 */
+	suspend fun installPackage(apkFile: ApkSource) = installPackages(apkFile)
+
+	/**
+	 * See [installPackage].
+	 *
 	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: Uri) = installPackages(UriApkSource(apkFile))
+	suspend fun installPackage(apkFile: Uri) = installPackage(UriApkSource(apkFile))
 
 	/**
 	 * See [installPackage].
@@ -148,7 +144,7 @@ object PackageInstaller {
 	 * @param [apkFile] [AssetFileDescriptor] of APK file.
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: AssetFileDescriptor) = installPackages(AssetFileDescriptorApkSource(apkFile))
+	suspend fun installPackage(apkFile: AssetFileDescriptor) = installPackage(AssetFileDescriptorApkSource(apkFile))
 
 	/**
 	 * See [installPackage].
@@ -156,15 +152,7 @@ object PackageInstaller {
 	 * @param [apkFile] [File] object representing APK file.
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: File) = installPackages(FileApkSource(apkFile))
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] any source of APK file implemented by [ApkSource].
-	 * @return [InstallResult]
-	 */
-	suspend fun installPackage(apkFile: ApkSource) = installPackages(apkFile)
+	suspend fun installPackage(apkFile: File) = installPackage(FileApkSource(apkFile))
 
 	@JvmStatic
 	private var NOTIFICATION_ID = 18475
