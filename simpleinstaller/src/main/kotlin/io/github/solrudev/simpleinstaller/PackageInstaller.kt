@@ -6,10 +6,10 @@ import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
+import android.content.res.AssetFileDescriptor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
@@ -18,8 +18,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.solrudev.simpleinstaller.activityresult.ActionInstallPackageContract
 import io.github.solrudev.simpleinstaller.apksource.ApkSource
+import io.github.solrudev.simpleinstaller.apksource.AssetFileDescriptorApkSource
 import io.github.solrudev.simpleinstaller.apksource.FileApkSource
-import io.github.solrudev.simpleinstaller.apksource.ParcelFileDescriptorApkSource
 import io.github.solrudev.simpleinstaller.apksource.UriApkSource
 import io.github.solrudev.simpleinstaller.apksource.utils.toApkSourceArray
 import io.github.solrudev.simpleinstaller.data.InstallFailureCause
@@ -93,11 +93,11 @@ object PackageInstaller {
 	/**
 	 * See [installSplitPackage].
 	 *
-	 * @param [apkFiles] [ParcelFileDescriptor]s of split APK files.
+	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	suspend fun installSplitPackage(vararg apkFiles: ParcelFileDescriptor): InstallResult {
+	suspend fun installSplitPackage(vararg apkFiles: AssetFileDescriptor): InstallResult {
 		if (!usePackageInstallerApi) {
 			throw SplitPackagesNotSupportedException()
 		}
@@ -145,10 +145,10 @@ object PackageInstaller {
 	/**
 	 * See [installPackage].
 	 *
-	 * @param [apkFile] [ParcelFileDescriptor] of APK file.
+	 * @param [apkFile] [AssetFileDescriptor] of APK file.
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: ParcelFileDescriptor) = installPackages(ParcelFileDescriptorApkSource(apkFile))
+	suspend fun installPackage(apkFile: AssetFileDescriptor) = installPackages(AssetFileDescriptorApkSource(apkFile))
 
 	/**
 	 * See [installPackage].
