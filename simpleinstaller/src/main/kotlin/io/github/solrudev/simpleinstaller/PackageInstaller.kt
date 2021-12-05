@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
@@ -16,9 +17,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.solrudev.simpleinstaller.activityresult.ActionInstallPackageContract
+import io.github.solrudev.simpleinstaller.apksource.ApkSource
+import io.github.solrudev.simpleinstaller.apksource.FileApkSource
+import io.github.solrudev.simpleinstaller.apksource.ParcelFileDescriptorApkSource
+import io.github.solrudev.simpleinstaller.apksource.UriApkSource
+import io.github.solrudev.simpleinstaller.apksource.utils.toApkSourceArray
 import io.github.solrudev.simpleinstaller.data.InstallFailureCause
 import io.github.solrudev.simpleinstaller.data.InstallResult
 import io.github.solrudev.simpleinstaller.data.ProgressData
+import io.github.solrudev.simpleinstaller.data.utils.makeIndeterminate
+import io.github.solrudev.simpleinstaller.data.utils.reset
+import io.github.solrudev.simpleinstaller.data.utils.tryEmit
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
 import io.github.solrudev.simpleinstaller.exceptions.SplitPackagesNotSupportedException
 import io.github.solrudev.simpleinstaller.exceptions.UnsupportedUriSchemeException
@@ -28,12 +37,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import java.io.File
-import java.io.FileOutputStream
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
-private const val TEMP_FILE_NAME = "temp.apk"
 private const val REQUEST_CODE = 6541
 private const val ACTION_INSTALLATION_STATUS = "io.github.solrudev.simpleinstaller.INSTALLATION_STATUS"
 
@@ -75,6 +82,53 @@ object PackageInstaller {
 		if (!usePackageInstallerApi) {
 			throw SplitPackagesNotSupportedException()
 		}
+		apkFiles.forEach {
+			if (!isUriSupported(it)) {
+				throw UnsupportedUriSchemeException(it)
+			}
+		}
+		return installPackages(*apkFiles.toApkSourceArray())
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [ParcelFileDescriptor]s of split APK files.
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: ParcelFileDescriptor): InstallResult {
+		if (!usePackageInstallerApi) {
+			throw SplitPackagesNotSupportedException()
+		}
+		return installPackages(*apkFiles.toApkSourceArray())
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [File] objects representing split APK files.
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: File): InstallResult {
+		if (!usePackageInstallerApi) {
+			throw SplitPackagesNotSupportedException()
+		}
+		return installPackages(*apkFiles.toApkSourceArray())
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] any source of split APK files implemented by [ApkSource].
+	 * @return [InstallResult]
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	suspend fun installSplitPackage(vararg apkFiles: ApkSource): InstallResult {
+		if (!usePackageInstallerApi) {
+			throw SplitPackagesNotSupportedException()
+		}
 		return installPackages(*apkFiles)
 	}
 
@@ -86,7 +140,31 @@ object PackageInstaller {
 	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: Uri) = installPackages(apkFile)
+	suspend fun installPackage(apkFile: Uri) = installPackages(UriApkSource(apkFile))
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] [ParcelFileDescriptor] of APK file.
+	 * @return [InstallResult]
+	 */
+	suspend fun installPackage(apkFile: ParcelFileDescriptor) = installPackages(ParcelFileDescriptorApkSource(apkFile))
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] [File] object representing APK file.
+	 * @return [InstallResult]
+	 */
+	suspend fun installPackage(apkFile: File) = installPackages(FileApkSource(apkFile))
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] any source of APK file implemented by [ApkSource].
+	 * @return [InstallResult]
+	 */
+	suspend fun installPackage(apkFile: ApkSource) = installPackages(apkFile)
 
 	@JvmStatic
 	private var NOTIFICATION_ID = 18475
@@ -94,7 +172,6 @@ object PackageInstaller {
 	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private var activityFirstCreated = true
-	private val tempApk by lazy { File(SimpleInstaller.applicationContext.externalCacheDir, TEMP_FILE_NAME) }
 
 	private val installFinishedCallback = MutableSharedFlow<Unit>(
 		extraBufferCapacity = 1,
@@ -153,7 +230,7 @@ object PackageInstaller {
 		}
 	}
 
-	private suspend fun installPackages(vararg apkFiles: Uri): InstallResult {
+	private suspend fun installPackages(vararg apkFiles: ApkSource): InstallResult {
 		if (apkFiles.isEmpty()) {
 			return InstallResult.Failure(InstallFailureCause.Generic("No APKs provided."))
 		}
@@ -164,6 +241,7 @@ object PackageInstaller {
 				if (usePackageInstallerApi) {
 					abandonSession(sessionId)
 				}
+				apkFiles.forEach { it.clearTempFiles() }
 				onCancellation()
 			}
 			capturedContinuation = continuation
@@ -177,19 +255,14 @@ object PackageInstaller {
 						if (apkFiles.size > 1) {
 							throw SplitPackagesNotSupportedException()
 						}
-						val apkUri = when (apkFiles.first().scheme) {
-							ContentResolver.SCHEME_CONTENT -> createTempCopy(apkFiles.first())
-							ContentResolver.SCHEME_FILE -> apkFiles.first()
-							else -> throw UnsupportedUriSchemeException(apkFiles.first())
+						val progressJob = launch {
+							apkFiles.first().progress.collect { _progress.emit(it) }
 						}
+						val apkUri = apkFiles.first().getUri()
+						progressJob.cancel()
 						_progress.makeIndeterminate()
 						displayNotification(apkUri = apkUri)
 						return@launch
-					}
-					apkFiles.forEach {
-						if (!isUriSupported(it)) {
-							throw UnsupportedUriSchemeException(it)
-						}
 					}
 					localBroadcastManager.registerReceiver(
 						installationEventsReceiver,
@@ -214,22 +287,8 @@ object PackageInstaller {
 		}
 	}
 
-	private suspend inline fun createTempCopy(apkFile: Uri): Uri {
-		tempApk.delete()
-		tempApk.createNewFile()
-		val inputStream = SimpleInstaller.applicationContext.contentResolver.openInputStream(apkFile)
-		val outputStream = FileOutputStream(tempApk)
-		copy(
-			requireNotNull(inputStream) { "APK InputStream was null." },
-			outputStream,
-			apkFile.length,
-			_progress
-		)
-		return Uri.fromFile(tempApk)
-	}
-
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	private suspend inline fun PackageInstaller.Session.copyApksFrom(vararg apkFiles: Uri) = coroutineScope {
+	private suspend inline fun PackageInstaller.Session.copyApksFrom(vararg apkFiles: ApkSource) = coroutineScope {
 		val progressFlow = MutableSharedFlow<ProgressData>(
 			replay = 0,
 			extraBufferCapacity = 1,
@@ -238,20 +297,20 @@ object PackageInstaller {
 		val progressJob = launch {
 			progressFlow.collect { setStagingProgress(it.progress.toFloat() / it.max) }
 		}
-		val totalSize = apkFiles.map { it.length }.sum()
+		val totalLength = apkFiles.map { it.length }.sum()
 		var transferredBytes = 0L
 		for ((index, apkFile) in apkFiles.withIndex()) {
-			val apkStream = SimpleInstaller.applicationContext.contentResolver.openInputStream(apkFile)
-			val apkSize = apkFile.length
-			val sessionStream = openWrite("temp$index.apk", 0, apkSize)
+			val apkStream = apkFile.openInputStream()
+			val apkLength = apkFile.length
+			val sessionStream = openWrite("temp$index.apk", 0, apkLength)
 			copy(
 				requireNotNull(apkStream) { "APK $index InputStream was null." },
 				sessionStream,
-				totalSize,
+				totalLength,
 				progressFlow,
 				transferredBytes
 			)
-			transferredBytes += apkSize
+			transferredBytes += apkLength
 		}
 		progressJob.cancel()
 	}
@@ -269,8 +328,6 @@ object PackageInstaller {
 		if (usePackageInstallerApi) {
 			packageInstaller.unregisterSessionCallback(packageInstallerSessionObserver)
 			localBroadcastManager.unregisterReceiver(installationEventsReceiver)
-		} else if (tempApk.exists()) {
-			tempApk.delete()
 		}
 		notificationManager.cancel(NOTIFICATION_ID)
 	} catch (_: ApplicationContextNotSetException) {
@@ -345,14 +402,12 @@ object PackageInstaller {
 			lifecycleScope.launchWhenResumed {
 				installFinishedCallback.collect { finish() }
 			}
-			if (activityFirstCreated && savedInstanceState == null) {
+			if (savedInstanceState != null) return
+			if (activityFirstCreated) {
 				activityFirstCreated = false
 				if (usePackageInstallerApi) {
 					commitSession()
 				}
-			}
-			if (savedInstanceState != null) {
-				return
 			}
 			if (usePackageInstallerApi) {
 				intent.extras?.getParcelable<Intent>(Intent.EXTRA_INTENT)?.let {
