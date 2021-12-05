@@ -41,7 +41,7 @@ URIs must have `file:` or `content:` scheme.
 These methods return an `InstallResult` object, which can be either `Success` or `Failure`. `Failure` object may contain a cause of failure in its `cause` property.
 
 #### Install permission
-On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. But relying on this is not recommended, because your app will be restarted if user chooses Always allow, so the result and progress won't be received anymore. There's `InstallPermissionContract` in `activityresult` package which you can use to request user to turn on install from unknown sources for your app.
+On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. But relying on this is not recommended, because your app will be restarted if user chooses Always allow, so the result and progress won't be received anymore (this is the case for MIUI). There's `InstallPermissionContract` in `activityresult` package which you should use to request user to turn on install from unknown sources for your app.
 
 In your Activity:
 ```kotlin
