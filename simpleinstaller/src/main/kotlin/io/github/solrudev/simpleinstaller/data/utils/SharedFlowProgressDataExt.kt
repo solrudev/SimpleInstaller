@@ -1,4 +1,4 @@
-package io.github.solrudev.simpleinstaller.utils.extensions
+package io.github.solrudev.simpleinstaller.data.utils
 
 import io.github.solrudev.simpleinstaller.data.ProgressData
 import kotlinx.coroutines.delay

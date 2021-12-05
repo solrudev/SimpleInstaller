@@ -1,7 +1,7 @@
 package io.github.solrudev.simpleinstaller.utils
 
 import io.github.solrudev.simpleinstaller.data.ProgressData
-import io.github.solrudev.simpleinstaller.utils.extensions.emit
+import io.github.solrudev.simpleinstaller.data.utils.emit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
