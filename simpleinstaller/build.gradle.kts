@@ -46,11 +46,9 @@ android {
 }
 
 dependencies {
-	val coroutinesVersion = "1.5.2"
-	api("androidx.activity:activity-ktx:1.4.0")
-	api("androidx.appcompat:appcompat:1.4.0")
-	api("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+	implementation("androidx.appcompat:appcompat:1.4.0")
+	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
 	implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
 	implementation("com.squareup.okio:okio:3.0.0")
 }

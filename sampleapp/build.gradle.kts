@@ -41,8 +41,7 @@ android {
 
 dependencies {
 	kapt("androidx.databinding:databinding-compiler:7.0.3")
-	implementation("androidx.appcompat:appcompat:1.4.0")
+	implementation("androidx.activity:activity-ktx:1.4.0")
 	implementation("com.google.android.material:material:1.4.0")
-	implementation("androidx.constraintlayout:constraintlayout:2.1.2")
 	implementation(project(":simpleinstaller"))
 }
