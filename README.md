@@ -12,8 +12,9 @@ SimpleInstaller was developed with background execution in mind. You can launch 
 ## Gradle dependencies
 All versions are available [here](https://s01.oss.sonatype.org/#nexus-search;gav~io.github.solrudev~simpleinstaller~~~).
 ```kotlin
-implementation("io.github.solrudev:simpleinstaller:1.1.0")
+implementation("io.github.solrudev:simpleinstaller:x.y.z")
 ```
+Replace "x.y.z" with the latest version.
 
 ## Usage
 First, you need to initialize SimpleInstaller. To do this, add the following line to your Application class' `onCreate()` method:
