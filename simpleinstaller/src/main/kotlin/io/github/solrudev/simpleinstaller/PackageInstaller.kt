@@ -74,7 +74,7 @@ object PackageInstaller {
 	 * Attempting to use this method on these versions will produce [SplitPackagesNotSupportedException].
 	 *
 	 * It is safe to call on main thread. Supports cancellation.
-	 * @param [apkFiles] any source of split APK files implemented by [ApkSource].
+	 * @param [apkFiles] Any source of split APK files implemented by [ApkSource].
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -82,7 +82,7 @@ object PackageInstaller {
 		if (!usePackageInstallerApi) {
 			throw SplitPackagesNotSupportedException()
 		}
-		return installPackages(*apkFiles)
+		return installPackages(apkFiles)
 	}
 
 	/**
@@ -125,10 +125,10 @@ object PackageInstaller {
 	 * with prompting user to confirm installation and suspends until it finishes.
 	 *
 	 * It is safe to call on main thread. Supports cancellation.
-	 * @param [apkFile] any source of APK file implemented by [ApkSource].
+	 * @param [apkFile] Any source of APK file implemented by [ApkSource].
 	 * @return [InstallResult]
 	 */
-	suspend fun installPackage(apkFile: ApkSource) = installPackages(apkFile)
+	suspend fun installPackage(apkFile: ApkSource) = installPackages(arrayOf(apkFile))
 
 	/**
 	 * See [installPackage].
@@ -219,7 +219,7 @@ object PackageInstaller {
 		}
 	}
 
-	private suspend fun installPackages(vararg apkFiles: ApkSource): InstallResult {
+	private suspend fun installPackages(apkFiles: Array<out ApkSource>): InstallResult {
 		if (apkFiles.isEmpty()) {
 			return InstallResult.Failure(InstallFailureCause.Generic("No APKs provided."))
 		}
@@ -267,7 +267,7 @@ object PackageInstaller {
 						withContext(Dispatchers.Main) {
 							packageInstaller.registerSessionCallback(packageInstallerSessionObserver)
 						}
-						it.copyApksFrom(*apkFiles)
+						it.copyApksFrom(apkFiles)
 						displayNotification(sessionId = sessionId)
 					}
 				} catch (e: Throwable) {
@@ -278,7 +278,7 @@ object PackageInstaller {
 	}
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	private suspend inline fun PackageInstaller.Session.copyApksFrom(vararg apkFiles: ApkSource) = coroutineScope {
+	private suspend inline fun PackageInstaller.Session.copyApksFrom(apkFiles: Array<out ApkSource>) = coroutineScope {
 		val progressFlow = MutableSharedFlow<ProgressData>(
 			replay = 0,
 			extraBufferCapacity = 1,
