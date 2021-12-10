@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-	kapt("androidx.databinding:databinding-compiler:7.0.3")
+	kapt("androidx.databinding:databinding-compiler:7.0.4")
 	implementation("androidx.activity:activity-ktx:1.4.0")
 	implementation("com.google.android.material:material:1.4.0")
 	implementation(project(":simpleinstaller"))
