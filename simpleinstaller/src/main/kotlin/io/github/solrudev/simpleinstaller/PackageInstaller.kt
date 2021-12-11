@@ -246,7 +246,7 @@ object PackageInstaller {
 						}
 						val apkFile = apkFiles.first()
 						val progressJob = launch {
-							apkFile.progress.collect { _progress.emit(it) }
+							_progress.emitAll(apkFile.progress)
 						}
 						val apkUri = apkFile.getUri()
 						progressJob.cancel()
