@@ -172,25 +172,10 @@ object PackageInstaller {
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 	@JvmStatic
 	fun installSplitPackage(vararg apkFiles: ApkSource, callback: PackageInstallerCallback) {
-		installScope.launch {
-			try {
-				launch(Dispatchers.Main) {
-					progress.collect { callback.onProgressChanged(it) }
-				}
-				when (val result = installSplitPackage(*apkFiles)) {
-					is InstallResult.Success -> withContext(Dispatchers.Main) { callback.onSuccess() }
-					is InstallResult.Failure -> withContext(Dispatchers.Main) { callback.onFailure(result.cause) }
-				}
-			} catch (e: Throwable) {
-				if (e is CancellationException) {
-					withContext(Dispatchers.Main) { callback.onCanceled() }
-					return@launch
-				}
-				withContext(Dispatchers.Main) { callback.onException(e) }
-			} finally {
-				coroutineContext[Job]?.cancel()
-			}
+		if (!usePackageInstallerApi) {
+			throw SplitPackagesNotSupportedException()
 		}
+		installPackages(apkFiles, callback)
 	}
 
 	/**
@@ -226,7 +211,7 @@ object PackageInstaller {
 	/**
 	 * See [installSplitPackage].
 	 *
-	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
+	 * @param [apkFiles] [File] objects representing split APK files.
 	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
 	 * Its methods are called on main thread.
 	 */
@@ -238,32 +223,13 @@ object PackageInstaller {
 	/**
 	 * See [installPackage].
 	 *
-	 * @param [apkFile] [Uri] of APK file. Must be file: or content: URI.
+	 * @param [apkFile] Any source of APK file implemented by [ApkSource].
 	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
 	 * Its methods are called on main thread.
 	 */
 	@JvmStatic
-	fun installPackage(apkFile: ApkSource, callback: PackageInstallerCallback) {
-		installScope.launch {
-			try {
-				launch(Dispatchers.Main) {
-					progress.collect { callback.onProgressChanged(it) }
-				}
-				when (val result = installPackage(apkFile)) {
-					is InstallResult.Success -> withContext(Dispatchers.Main) { callback.onSuccess() }
-					is InstallResult.Failure -> withContext(Dispatchers.Main) { callback.onFailure(result.cause) }
-				}
-			} catch (e: Throwable) {
-				if (e is CancellationException) {
-					withContext(Dispatchers.Main) { callback.onCanceled() }
-					return@launch
-				}
-				withContext(Dispatchers.Main) { callback.onException(e) }
-			} finally {
-				coroutineContext[Job]?.cancel()
-			}
-		}
-	}
+	fun installPackage(apkFile: ApkSource, callback: PackageInstallerCallback) =
+		installPackages(arrayOf(apkFile), callback)
 
 	/**
 	 * See [installPackage].
@@ -370,6 +336,28 @@ object PackageInstaller {
 
 			override fun onProgressChanged(sessionId: Int, progress: Float) {
 				_progress.tryEmit((progress * 100).toInt(), 100)
+			}
+		}
+	}
+
+	private fun installPackages(apkFiles: Array<out ApkSource>, callback: PackageInstallerCallback) {
+		installScope.launch {
+			try {
+				launch(Dispatchers.Main) {
+					progress.collect { callback.onProgressChanged(it) }
+				}
+				when (val result = installPackages(apkFiles)) {
+					is InstallResult.Success -> withContext(Dispatchers.Main) { callback.onSuccess() }
+					is InstallResult.Failure -> withContext(Dispatchers.Main) { callback.onFailure(result.cause) }
+				}
+			} catch (e: Throwable) {
+				if (e is CancellationException) {
+					withContext(Dispatchers.Main) { callback.onCanceled() }
+					return@launch
+				}
+				withContext(Dispatchers.Main) { callback.onException(e) }
+			} finally {
+				coroutineContext[Job]?.cancel()
 			}
 		}
 	}
