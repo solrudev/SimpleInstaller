@@ -1,5 +1,3 @@
-@file:JvmSynthetic
-
 package io.github.solrudev.simpleinstaller.utils
 
 import io.github.solrudev.simpleinstaller.data.ProgressData
@@ -18,6 +16,7 @@ import kotlin.math.ceil
 
 private const val BUFFER_LENGTH: Long = 8192
 
+@JvmSynthetic
 internal suspend fun copy(
 	inputStream: InputStream,
 	outputStream: OutputStream,

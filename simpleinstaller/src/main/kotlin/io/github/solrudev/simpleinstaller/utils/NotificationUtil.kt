@@ -1,5 +1,3 @@
-@file:JvmSynthetic
-
 package io.github.solrudev.simpleinstaller.utils
 
 import android.app.NotificationManager
@@ -10,9 +8,11 @@ import androidx.core.app.NotificationCompat
 import io.github.solrudev.simpleinstaller.R
 import io.github.solrudev.simpleinstaller.SimpleInstaller
 
+@get:JvmSynthetic
 internal val notificationManager
 	get() = SimpleInstaller.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+@get:JvmSynthetic
 internal val pendingIntentUpdateCurrentFlags
 	get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 		PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -20,6 +20,7 @@ internal val pendingIntentUpdateCurrentFlags
 		PendingIntent.FLAG_UPDATE_CURRENT
 	}
 
+@get:JvmSynthetic
 internal val pendingIntentCancelCurrentFlags
 	get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 		PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_CANCEL_CURRENT
@@ -27,6 +28,7 @@ internal val pendingIntentCancelCurrentFlags
 		PendingIntent.FLAG_CANCEL_CURRENT
 	}
 
+@JvmSynthetic
 internal fun showNotification(intent: PendingIntent, notificationId: Int, titleId: Int, messageId: Int) {
 	val channelId =
 		SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_id)

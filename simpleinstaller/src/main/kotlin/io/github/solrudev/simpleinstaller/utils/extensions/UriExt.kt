@@ -1,5 +1,3 @@
-@file:JvmSynthetic
-
 package io.github.solrudev.simpleinstaller.utils.extensions
 
 import android.content.ContentResolver
@@ -9,6 +7,7 @@ import io.github.solrudev.simpleinstaller.SimpleInstaller
 import java.io.File
 import java.io.FileNotFoundException
 
+@get:JvmSynthetic
 internal val Uri.length: Long
 	get() {
 		if (scheme == ContentResolver.SCHEME_FILE) {

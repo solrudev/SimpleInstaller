@@ -1,5 +1,3 @@
-@file:JvmSynthetic
-
 package io.github.solrudev.simpleinstaller.utils.extensions
 
 import android.app.Activity
@@ -9,6 +7,7 @@ import android.os.Build
 import android.view.WindowManager
 
 @Suppress("DEPRECATION")
+@JvmSynthetic
 internal fun Activity.turnScreenOnWhenLocked() {
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
 		setShowWhenLocked(true)
@@ -31,6 +30,7 @@ internal fun Activity.turnScreenOnWhenLocked() {
 }
 
 @Suppress("DEPRECATION")
+@JvmSynthetic
 internal fun Activity.clearTurnScreenOnSettings() {
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
 		setShowWhenLocked(false)
