@@ -21,6 +21,10 @@ First, you need to initialize SimpleInstaller. To do this, add the following lin
 ```kotlin
 SimpleInstaller.initialize(this)
 ```
+Optionally, you can provide an icon for SimpleInstaller notifications:
+```kotlin
+SimpleInstaller.initialize(this, R.drawable.your_notification_icon)
+```
 
 ### Installation
 There are two methods for installation, each of them receives either `Uri`, `AssetFileDescriptor`, `File` or custom `ApkSource`. URIs must have `file:` or `content:` scheme.
@@ -79,6 +83,8 @@ fun PackageUninstaller.uninstallPackage(packageName: String, callback: PackageUn
 ```
 
 ## Java interoperability
+`SimpleInstaller.initialize()` is available statically and has a separate overload with notification icon resource ID as a parameter.
+
 There are static methods in `PackageInstaller` and `PackageUninstaller` which accept callbacks as a second parameter. They are wrappers around Kotlin suspend functions. Callbacks have the following interfaces:
 ```kotlin
 interface PackageInstallerCallback {
