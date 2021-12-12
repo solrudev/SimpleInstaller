@@ -26,6 +26,7 @@ object PackageUninstaller {
 	 * Property which reflects if there's already a uninstall session going on.
 	 * If returns true, attempting to start a new uninstall session will result in [IllegalStateException].
 	 */
+	@JvmStatic
 	var hasActiveSession = false
 		private set
 

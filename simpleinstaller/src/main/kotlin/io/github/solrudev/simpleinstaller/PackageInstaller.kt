@@ -53,6 +53,7 @@ object PackageInstaller {
 	 * Property which reflects if there's already an install session going on.
 	 * If returns true, attempting to start a new install session will result in [IllegalStateException].
 	 */
+	@JvmStatic
 	var hasActiveSession = false
 		private set
 
