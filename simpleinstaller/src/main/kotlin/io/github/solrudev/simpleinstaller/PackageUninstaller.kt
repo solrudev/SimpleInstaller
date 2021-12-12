@@ -92,7 +92,7 @@ object PackageUninstaller {
 	}
 
 	/**
-	 * Cancels current coroutine and abandons current install session.
+	 * Cancels current coroutine.
 	 */
 	@JvmStatic
 	fun cancel() {
