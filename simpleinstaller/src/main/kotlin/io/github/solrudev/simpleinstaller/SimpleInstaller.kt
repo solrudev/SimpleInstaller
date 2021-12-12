@@ -14,12 +14,19 @@ import io.github.solrudev.simpleinstaller.utils.requireContextNotNull
  */
 object SimpleInstaller {
 
-	private var _applicationContext: Context? = null
-	internal val applicationContext: Context get() = requireContextNotNull(_applicationContext)
-	internal val packageName: String get() = applicationContext.packageName
+	@get:JvmSynthetic
+	internal val applicationContext: Context
+		get() = requireContextNotNull(_applicationContext)
 
+	@get:JvmSynthetic
+	internal val packageName: String
+		get() = applicationContext.packageName
+
+	@get:JvmSynthetic
 	internal var notificationIconId = android.R.drawable.ic_dialog_alert
 		private set
+
+	private var _applicationContext: Context? = null
 
 	/**
 	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
