@@ -7,10 +7,13 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import io.github.solrudev.simpleinstaller.sampleapp.AppData
 import io.github.solrudev.simpleinstaller.sampleapp.databinding.UninstallActivityBinding
 import io.github.solrudev.simpleinstaller.sampleapp.viewmodels.UninstallViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -34,13 +37,11 @@ class UninstallActivity : AppCompatActivity() {
 			binding.appsLoadingSpinner.visibility = View.VISIBLE
 		}
 
-		lifecycleScope.launchWhenResumed {
-			launch {
-				viewModel.appsList.collect {
-					adapter.submitList(it)
-				}
-			}
+		lifecycleScope.launch {
 			if (savedInstanceState == null) loadApps()
+			viewModel.appsList
+				.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+				.collect { adapter.submitList(it) }
 		}
 	}
 
@@ -49,7 +50,7 @@ class UninstallActivity : AppCompatActivity() {
 		return true
 	}
 
-	private suspend fun loadApps() {
+	private fun CoroutineScope.loadApps() = launch {
 		withContext(Dispatchers.Default) {
 			val appsList = getInstalledAppsList()
 			viewModel.setAppsList(appsList)
