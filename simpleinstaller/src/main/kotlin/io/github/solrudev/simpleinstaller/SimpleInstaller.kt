@@ -29,6 +29,7 @@ object SimpleInstaller {
 	 * Example: `SimpleInstaller.initialize(this)`
 	 */
 	@JvmStatic
+	@JvmOverloads
 	fun initialize(
 		applicationContext: Context,
 		@DrawableRes notificationIconId: Int = android.R.drawable.ic_dialog_alert
