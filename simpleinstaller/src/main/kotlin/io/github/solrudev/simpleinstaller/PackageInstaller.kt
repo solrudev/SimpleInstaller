@@ -358,6 +358,7 @@ object PackageInstaller {
 				}
 				withContext(Dispatchers.Main) { callback.onException(e) }
 			} finally {
+				withContext(Dispatchers.Main) { callback.onProgressChanged(ProgressData()) }
 				coroutineContext[Job]?.cancel()
 			}
 		}
