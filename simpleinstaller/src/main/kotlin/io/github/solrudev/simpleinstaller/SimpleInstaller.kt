@@ -14,15 +14,19 @@ import io.github.solrudev.simpleinstaller.utils.requireContextNotNull
  */
 object SimpleInstaller {
 
-	private var _applicationContext: Context? = null
-
+	@get:JvmSynthetic
 	internal val applicationContext: Context
 		get() = requireContextNotNull(_applicationContext)
 
-	internal var notificationIconId: Int = android.R.drawable.ic_dialog_alert
+	@get:JvmSynthetic
+	internal val packageName: String
+		get() = applicationContext.packageName
+
+	@get:JvmSynthetic
+	internal var notificationIconId = android.R.drawable.ic_dialog_alert
 		private set
 
-	internal val packageName: String get() = requireContextNotNull(_applicationContext).packageName
+	private var _applicationContext: Context? = null
 
 	/**
 	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
@@ -31,6 +35,8 @@ object SimpleInstaller {
 	 *
 	 * Example: `SimpleInstaller.initialize(this)`
 	 */
+	@JvmStatic
+	@JvmOverloads
 	fun initialize(
 		applicationContext: Context,
 		@DrawableRes notificationIconId: Int = android.R.drawable.ic_dialog_alert
@@ -39,12 +45,11 @@ object SimpleInstaller {
 			throw SimpleInstallerReinitializeException()
 		}
 		_applicationContext = applicationContext.applicationContext
-		SimpleInstaller.notificationIconId = notificationIconId
+		this.notificationIconId = notificationIconId
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-		val channelIdString = SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_id)
-		val channelName = SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_name)
-		val channelDescription =
-			SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_description)
+		val channelIdString = this.applicationContext.getString(R.string.ssi_notification_channel_id)
+		val channelName = this.applicationContext.getString(R.string.ssi_notification_channel_name)
+		val channelDescription = this.applicationContext.getString(R.string.ssi_notification_channel_description)
 		val importance = NotificationManager.IMPORTANCE_HIGH
 		val channel = NotificationChannel(channelIdString, channelName, importance).apply {
 			description = channelDescription

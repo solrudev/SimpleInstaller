@@ -1,3 +1,5 @@
+@file:JvmSynthetic
+
 package io.github.solrudev.simpleinstaller.data.utils
 
 import io.github.solrudev.simpleinstaller.data.ProgressData

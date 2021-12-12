@@ -53,6 +53,7 @@ object PackageInstaller {
 	 * Property which reflects if there's already an install session going on.
 	 * If returns true, attempting to start a new install session will result in [IllegalStateException].
 	 */
+	@JvmStatic
 	var hasActiveSession = false
 		private set
 
@@ -78,6 +79,7 @@ object PackageInstaller {
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmSynthetic
 	suspend fun installSplitPackage(vararg apkFiles: ApkSource): InstallResult {
 		if (!usePackageInstallerApi) {
 			throw SplitPackagesNotSupportedException()
@@ -92,6 +94,7 @@ object PackageInstaller {
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmSynthetic
 	suspend fun installSplitPackage(vararg apkFiles: Uri): InstallResult {
 		apkFiles.forEach {
 			if (!isUriSupported(it)) {
@@ -108,6 +111,7 @@ object PackageInstaller {
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmSynthetic
 	suspend fun installSplitPackage(vararg apkFiles: AssetFileDescriptor) =
 		installSplitPackage(*apkFiles.toApkSourceArray())
 
@@ -118,6 +122,7 @@ object PackageInstaller {
 	 * @return [InstallResult]
 	 */
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmSynthetic
 	suspend fun installSplitPackage(vararg apkFiles: File) = installSplitPackage(*apkFiles.toApkSourceArray())
 
 	/**
@@ -128,6 +133,7 @@ object PackageInstaller {
 	 * @param [apkFile] Any source of APK file implemented by [ApkSource].
 	 * @return [InstallResult]
 	 */
+	@JvmSynthetic
 	suspend fun installPackage(apkFile: ApkSource) = installPackages(arrayOf(apkFile))
 
 	/**
@@ -136,6 +142,7 @@ object PackageInstaller {
 	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
 	 * @return [InstallResult]
 	 */
+	@JvmSynthetic
 	suspend fun installPackage(apkFile: Uri) = installPackage(UriApkSource(apkFile))
 
 	/**
@@ -144,6 +151,7 @@ object PackageInstaller {
 	 * @param [apkFile] [AssetFileDescriptor] of APK file.
 	 * @return [InstallResult]
 	 */
+	@JvmSynthetic
 	suspend fun installPackage(apkFile: AssetFileDescriptor) = installPackage(AssetFileDescriptorApkSource(apkFile))
 
 	/**
@@ -152,12 +160,126 @@ object PackageInstaller {
 	 * @param [apkFile] [File] object representing APK file.
 	 * @return [InstallResult]
 	 */
+	@JvmSynthetic
 	suspend fun installPackage(apkFile: File) = installPackage(FileApkSource(apkFile))
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] Any source of split APK files implemented by [ApkSource].
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmStatic
+	fun installSplitPackage(vararg apkFiles: ApkSource, callback: PackageInstallerCallback) {
+		if (!usePackageInstallerApi) {
+			throw SplitPackagesNotSupportedException()
+		}
+		installPackages(apkFiles, callback)
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmStatic
+	fun installSplitPackage(vararg apkFiles: Uri, callback: PackageInstallerCallback) {
+		apkFiles.forEach {
+			if (!isUriSupported(it)) {
+				throw UnsupportedUriSchemeException(it)
+			}
+		}
+		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
+	}
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmStatic
+	fun installSplitPackage(vararg apkFiles: AssetFileDescriptor, callback: PackageInstallerCallback) =
+		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
+
+	/**
+	 * See [installSplitPackage].
+	 *
+	 * @param [apkFiles] [File] objects representing split APK files.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@JvmStatic
+	fun installSplitPackage(vararg apkFiles: File, callback: PackageInstallerCallback) =
+		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] Any source of APK file implemented by [ApkSource].
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@JvmStatic
+	fun installPackage(apkFile: ApkSource, callback: PackageInstallerCallback) =
+		installPackages(arrayOf(apkFile), callback)
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@JvmStatic
+	fun installPackage(apkFile: Uri, callback: PackageInstallerCallback) =
+		installPackage(UriApkSource(apkFile), callback)
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] [AssetFileDescriptor] of APK file.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@JvmStatic
+	fun installPackage(apkFile: AssetFileDescriptor, callback: PackageInstallerCallback) =
+		installPackage(AssetFileDescriptorApkSource(apkFile), callback)
+
+	/**
+	 * See [installPackage].
+	 *
+	 * @param [apkFile] [File] object representing APK file.
+	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
+	 * Its methods are called on main thread.
+	 */
+	@JvmStatic
+	fun installPackage(apkFile: File, callback: PackageInstallerCallback) =
+		installPackage(FileApkSource(apkFile), callback)
+
+	/**
+	 * Cancels current coroutine and abandons current install session.
+	 */
+	@JvmStatic
+	fun cancel() {
+		if (::capturedContinuation.isInitialized && capturedContinuation.isActive) {
+			capturedContinuation.cancel()
+		}
+	}
 
 	@JvmStatic
 	private var NOTIFICATION_ID = 18475
 
 	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
+	private val installScope = CoroutineScope(Dispatchers.Default)
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private var currentApkSources: Array<out ApkSource> = emptyArray()
 	private var activityFirstCreated = true
@@ -215,6 +337,29 @@ object PackageInstaller {
 
 			override fun onProgressChanged(sessionId: Int, progress: Float) {
 				_progress.tryEmit((progress * 100).toInt(), 100)
+			}
+		}
+	}
+
+	private fun installPackages(apkFiles: Array<out ApkSource>, callback: PackageInstallerCallback) {
+		installScope.launch {
+			try {
+				launch(Dispatchers.Main) {
+					progress.collect { callback.onProgressChanged(it) }
+				}
+				when (val result = installPackages(apkFiles)) {
+					is InstallResult.Success -> withContext(Dispatchers.Main) { callback.onSuccess() }
+					is InstallResult.Failure -> withContext(Dispatchers.Main) { callback.onFailure(result.cause) }
+				}
+			} catch (e: Throwable) {
+				if (e is CancellationException) {
+					withContext(Dispatchers.Main) { callback.onCanceled() }
+					return@launch
+				}
+				withContext(Dispatchers.Main) { callback.onException(e) }
+			} finally {
+				withContext(Dispatchers.Main) { callback.onProgressChanged(ProgressData()) }
+				coroutineContext[Job]?.cancel()
 			}
 		}
 	}

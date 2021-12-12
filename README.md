@@ -23,23 +23,24 @@ SimpleInstaller.initialize(this)
 ```
 
 ### Installation
-There are two methods for installation, each of them receives either `Uri`, `AssetFileDescriptor`, `File` or custom `ApkSource`.
+There are two methods for installation, each of them receives either `Uri`, `AssetFileDescriptor`, `File` or custom `ApkSource`. URIs must have `file:` or `content:` scheme.
 ```kotlin
-suspend fun PackageInstaller.installPackage(apkFile: Uri): InstallResult
-suspend fun PackageInstaller.installPackage(apkFile: AssetFileDescriptor): InstallResult
-suspend fun PackageInstaller.installPackage(apkFile: File): InstallResult
-suspend fun PackageInstaller.installPackage(apkFile: ApkSource): InstallResult
+suspend fun PackageInstaller.installPackage(apkFile): InstallResult
 ```
 ```kotlin
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-suspend fun PackageInstaller.installSplitPackage(vararg apkFiles: Uri): InstallResult
-suspend fun PackageInstaller.installSplitPackage(vararg apkFiles: AssetFileDescriptor): InstallResult
-suspend fun PackageInstaller.installSplitPackage(vararg apkFiles: File): InstallResult
-suspend fun PackageInstaller.installSplitPackage(vararg apkFiles: ApkSource): InstallResult
+suspend fun PackageInstaller.installSplitPackage(vararg apkFiles): InstallResult
 ```
-URIs must have `file:` or `content:` scheme.
-
 These methods return an `InstallResult` object, which can be either `Success` or `Failure`. `Failure` object may contain a cause of failure in its `cause` property.
+
+They also have non-suspend variants which accept `PackageInstallerCallback` callback as a second parameter.
+```kotlin
+fun PackageInstaller.installPackage(apkFile, callback: PackageInstallerCallback)
+```
+```kotlin
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+fun PackageInstaller.installSplitPackage(vararg apkFiles, callback: PackageInstallerCallback)
+```
 
 #### Install permission
 On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`, so on first install there should be a prompt from Android to allow installation. But relying on this is not recommended, because your app will be restarted if user chooses Always allow, so the result and progress won't be received anymore (this is the case for MIUI). There's `InstallPermissionContract` in `activityresult` package which you should use to request user to turn on install from unknown sources for your app.
@@ -71,6 +72,36 @@ SimpleInstaller has implementations for `Uri`, `AssetFileDescriptor` and `File`.
 suspend fun PackageUninstaller.uninstallPackage(packageName: String): Boolean
 ```
 Returns true if uninstall succeeded, false otherwise.
+
+This method also has non-suspend variant which accepts `PackageUninstallerCallback` callback as a second parameter.
+```kotlin
+fun PackageUninstaller.uninstallPackage(packageName: String, callback: PackageUninstallerCallback)
+```
+
+## Java interoperability
+There are static methods in `PackageInstaller` and `PackageUninstaller` which accept callbacks as a second parameter. They are wrappers around Kotlin suspend functions. Callbacks have the following interfaces:
+```kotlin
+interface PackageInstallerCallback {
+    fun onSuccess()
+    fun onFailure(cause: InstallFailureCause?)
+    fun onException(exception: Throwable)
+    fun onCanceled()
+    fun onProgressChanged(progress: ProgressData)
+}
+```
+```kotlin
+interface PackageUninstallerCallback {
+    fun onFinished(success: Boolean)
+    fun onException(exception: Throwable)
+    fun onCanceled()
+}
+```
+`hasActiveSession` property can be accessed statically:
+```kotlin
+PackageInstaller.getHasActiveSession()
+PackageUninstaller.getHasActiveSession()
+```
+Current install/uninstall session can be canceled through a static `cancel()` method.
 
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application selected from the installed apps list. Go [here](https://github.com/solrudev/SimpleInstaller/tree/master/sampleapp) to see sources.

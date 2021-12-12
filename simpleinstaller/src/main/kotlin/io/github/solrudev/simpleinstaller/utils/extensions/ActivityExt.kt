@@ -1,3 +1,5 @@
+@file:JvmSynthetic
+
 package io.github.solrudev.simpleinstaller.utils.extensions
 
 import android.app.Activity
