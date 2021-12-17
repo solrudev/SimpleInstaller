@@ -101,9 +101,7 @@ object PackageUninstaller {
 		}
 	}
 
-	@JvmStatic
 	private var NOTIFICATION_ID = 34187
-
 	private lateinit var capturedContinuation: CancellableContinuation<Boolean>
 	private val uninstallScope = CoroutineScope(Dispatchers.Default)
 	private val uninstallPackageContract = UninstallPackageContract()

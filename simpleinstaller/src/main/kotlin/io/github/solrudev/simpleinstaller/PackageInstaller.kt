@@ -275,9 +275,7 @@ object PackageInstaller {
 		}
 	}
 
-	@JvmStatic
 	private var NOTIFICATION_ID = 18475
-
 	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
 	private val installScope = CoroutineScope(Dispatchers.Default)
 	private val actionInstallPackageContract = ActionInstallPackageContract()
