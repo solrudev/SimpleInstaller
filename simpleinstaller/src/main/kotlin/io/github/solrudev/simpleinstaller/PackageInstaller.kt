@@ -440,9 +440,10 @@ object PackageInstaller {
 				requireNotNull(apkStream) { "APK $index InputStream was null." },
 				sessionStream,
 				totalLength,
-				progressFlow,
 				transferredBytes
-			)
+			) { progressData ->
+				progressFlow.emit(progressData)
+			}
 			transferredBytes += apkLength
 		}
 		progressJob.cancel()

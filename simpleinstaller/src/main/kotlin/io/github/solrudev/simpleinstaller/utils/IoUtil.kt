@@ -1,10 +1,8 @@
 package io.github.solrudev.simpleinstaller.utils
 
 import io.github.solrudev.simpleinstaller.data.ProgressData
-import io.github.solrudev.simpleinstaller.data.utils.emit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withContext
 import okio.Buffer
 import okio.buffer
@@ -21,8 +19,8 @@ internal suspend fun copy(
 	inputStream: InputStream,
 	outputStream: OutputStream,
 	totalSize: Long,
-	progress: MutableSharedFlow<ProgressData>,
-	progressOffsetBytes: Long = 0
+	progressOffsetBytes: Long = 0,
+	onProgressChanged: suspend (ProgressData) -> Unit
 ) = withContext(Dispatchers.IO) {
 	val progressRatio = calculateProgressRatio(totalSize, BUFFER_LENGTH)
 	val progressOffset = progressOffsetBytes / BUFFER_LENGTH
@@ -37,7 +35,7 @@ internal suspend fun copy(
 					sink.write(buffer, buffer.size)
 					currentProgress++
 					if (currentProgress % progressRatio == 0L) {
-						progress.emit((currentProgress / progressRatio).toInt(), progressMax)
+						onProgressChanged(ProgressData((currentProgress / progressRatio).toInt(), progressMax))
 					}
 				}
 			}
