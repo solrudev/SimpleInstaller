@@ -78,9 +78,8 @@ abstract class ApkSource {
 		copy(
 			requireNotNull(inputStream) { "APK InputStream was null." },
 			outputStream,
-			length,
-			_progress
-		)
+			length
+		) { progressData -> _progress.emit(progressData) }
 		return Uri.fromFile(tempApk)
 	}
 }

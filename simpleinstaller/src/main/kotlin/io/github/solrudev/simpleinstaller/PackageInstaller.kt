@@ -441,9 +441,7 @@ object PackageInstaller {
 				sessionStream,
 				totalLength,
 				transferredBytes
-			) { progressData ->
-				progressFlow.emit(progressData)
-			}
+			) { progressData -> progressFlow.emit(progressData) }
 			transferredBytes += apkLength
 		}
 		progressJob.cancel()
