@@ -12,9 +12,10 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.ceil
 
-private const val BUFFER_LENGTH: Long = 8192
+private const val BUFFER_LENGTH = 8192L
 
 @JvmSynthetic
+@Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun copy(
 	inputStream: InputStream,
 	outputStream: OutputStream,
@@ -26,8 +27,7 @@ internal suspend fun copy(
 	val progressOffset = progressOffsetBytes / BUFFER_LENGTH
 	inputStream.source().buffer().use { source ->
 		outputStream.sink().buffer().use { sink ->
-			val progressMax =
-				ceil(totalSize.toDouble() / (BUFFER_LENGTH * progressRatio)).toInt()
+			val progressMax = ceil(totalSize.toDouble() / (BUFFER_LENGTH * progressRatio)).toInt()
 			var currentProgress = progressOffset
 			Buffer().use { buffer ->
 				while (source.read(buffer, BUFFER_LENGTH) > 0) {
@@ -38,6 +38,7 @@ internal suspend fun copy(
 						onProgressChanged(ProgressData((currentProgress / progressRatio).toInt(), progressMax))
 					}
 				}
+				sink.flush()
 			}
 		}
 	}
