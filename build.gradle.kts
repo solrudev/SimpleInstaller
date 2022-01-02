@@ -2,7 +2,7 @@ import java.util.Properties
 import java.io.FileInputStream
 
 val publishGroupId by extra("io.github.solrudev")
-val publishVersion by extra("1.2.1")
+val publishVersion by extra("1.2.2")
 group = publishGroupId
 version = publishVersion
 
