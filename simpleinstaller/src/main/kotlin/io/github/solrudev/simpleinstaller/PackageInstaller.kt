@@ -351,12 +351,12 @@ object PackageInstaller {
 				}
 			} catch (e: Throwable) {
 				if (e is CancellationException) {
-					withContext(Dispatchers.Main) { callback.onCanceled() }
+					withContext(Dispatchers.Main + NonCancellable) { callback.onCanceled() }
 					return@launch
 				}
-				withContext(Dispatchers.Main) { callback.onException(e) }
+				withContext(Dispatchers.Main + NonCancellable) { callback.onException(e) }
 			} finally {
-				withContext(Dispatchers.Main) { callback.onProgressChanged(ProgressData()) }
+				withContext(Dispatchers.Main + NonCancellable) { callback.onProgressChanged(ProgressData()) }
 				coroutineContext[Job]?.cancel()
 			}
 		}

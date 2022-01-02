@@ -81,10 +81,10 @@ object PackageUninstaller {
 				withContext(Dispatchers.Main) { callback.onFinished(result) }
 			} catch (e: Throwable) {
 				if (e is CancellationException) {
-					withContext(Dispatchers.Main) { callback.onCanceled() }
+					withContext(Dispatchers.Main + NonCancellable) { callback.onCanceled() }
 					return@launch
 				}
-				withContext(Dispatchers.Main) { callback.onException(e) }
+				withContext(Dispatchers.Main + NonCancellable) { callback.onException(e) }
 			} finally {
 				coroutineContext[Job]?.cancel()
 			}
