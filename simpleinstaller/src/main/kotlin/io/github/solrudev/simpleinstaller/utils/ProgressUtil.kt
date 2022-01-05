@@ -6,4 +6,4 @@ private const val EMIT_COUNT = 100
 
 @JvmSynthetic
 internal fun calculateProgressRatio(totalSize: Long, bufferLength: Long) =
-	ceil(totalSize.toDouble() / (bufferLength * EMIT_COUNT)).toInt().coerceAtLeast(1)
+	ceil(totalSize.toDouble() / (bufferLength.coerceAtLeast(1) * EMIT_COUNT)).toInt().coerceAtLeast(1)

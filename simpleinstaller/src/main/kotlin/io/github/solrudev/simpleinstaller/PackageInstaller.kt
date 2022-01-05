@@ -422,14 +422,6 @@ object PackageInstaller {
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 	private suspend inline fun PackageInstaller.Session.copyApksFrom(apkFiles: Array<out ApkSource>) = coroutineScope {
-		val progressFlow = MutableSharedFlow<ProgressData>(
-			replay = 0,
-			extraBufferCapacity = 1,
-			onBufferOverflow = BufferOverflow.DROP_OLDEST
-		)
-		val progressJob = launch {
-			progressFlow.collect { setStagingProgress(it.progress.toFloat() / it.max) }
-		}
 		val totalLength = apkFiles.map { it.length }.sum()
 		var transferredBytes = 0L
 		for ((index, apkFile) in apkFiles.withIndex()) {
@@ -441,10 +433,9 @@ object PackageInstaller {
 				sessionStream,
 				totalLength,
 				transferredBytes
-			) { progressData -> progressFlow.emit(progressData) }
+			) { progressData -> setStagingProgress(progressData.progress.toFloat() / progressData.max.coerceAtLeast(1)) }
 			transferredBytes += apkLength
 		}
-		progressJob.cancel()
 	}
 
 	private fun isUriSupported(uri: Uri) =
