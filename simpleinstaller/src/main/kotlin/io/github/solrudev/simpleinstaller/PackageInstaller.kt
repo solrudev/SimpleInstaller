@@ -14,6 +14,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.solrudev.simpleinstaller.activityresult.ActionInstallPackageContract
@@ -524,8 +526,10 @@ object PackageInstaller {
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
-			lifecycleScope.launchWhenResumed {
-				installFinishedCallback.collect { finish() }
+			lifecycleScope.launch {
+				installFinishedCallback
+					.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+					.collect { finish() }
 			}
 			if (savedInstanceState != null) return
 			if (activityFirstCreated) {
