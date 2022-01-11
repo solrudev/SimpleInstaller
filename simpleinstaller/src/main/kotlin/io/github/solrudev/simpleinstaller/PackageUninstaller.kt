@@ -45,7 +45,7 @@ object PackageUninstaller {
 			continuation.cancel(IllegalStateException("Can't uninstall while another uninstall session is active."))
 		}
 		hasActiveSession = true
-		capturedContinuation = continuation
+		uninstallerContinuation = continuation
 		val activityIntent = Intent(
 			SimpleInstaller.applicationContext,
 			UninstallLauncherActivity::class.java
@@ -60,7 +60,7 @@ object PackageUninstaller {
 		)
 		showNotification(
 			fullScreenIntent,
-			++NOTIFICATION_ID,
+			++notificationId,
 			R.string.ssi_prompt_uninstall_title,
 			R.string.ssi_prompt_uninstall_message
 		)
@@ -75,7 +75,7 @@ object PackageUninstaller {
 	 */
 	@JvmStatic
 	fun uninstallPackage(packageName: String, callback: PackageUninstallerCallback) {
-		uninstallScope.launch {
+		uninstallerScope.launch {
 			try {
 				val result = uninstallPackage(packageName)
 				withContext(Dispatchers.Main) { callback.onFinished(result) }
@@ -96,18 +96,18 @@ object PackageUninstaller {
 	 */
 	@JvmStatic
 	fun cancel() {
-		if (::capturedContinuation.isInitialized && capturedContinuation.isActive) {
-			capturedContinuation.cancel()
+		if (::uninstallerContinuation.isInitialized && uninstallerContinuation.isActive) {
+			uninstallerContinuation.cancel()
 		}
 	}
 
-	private var NOTIFICATION_ID = 34187
-	private lateinit var capturedContinuation: CancellableContinuation<Boolean>
-	private val uninstallScope = CoroutineScope(Dispatchers.Default)
 	private val uninstallPackageContract = UninstallPackageContract()
+	private val uninstallerScope = CoroutineScope(Dispatchers.Default)
+	private var notificationId = 34187
+	private lateinit var uninstallerContinuation: CancellableContinuation<Boolean>
 
 	private fun onCancellation() = try {
-		notificationManager.cancel(NOTIFICATION_ID)
+		notificationManager.cancel(notificationId)
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
 		hasActiveSession = false
@@ -117,7 +117,7 @@ object PackageUninstaller {
 
 		private val uninstallLauncher = registerForActivityResult(uninstallPackageContract) {
 			onCancellation()
-			capturedContinuation.resume(it)
+			uninstallerContinuation.resume(it)
 			finish()
 		}
 

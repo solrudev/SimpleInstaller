@@ -39,7 +39,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import java.io.File
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
@@ -272,17 +271,17 @@ object PackageInstaller {
 	 */
 	@JvmStatic
 	fun cancel() {
-		if (::capturedContinuation.isInitialized && capturedContinuation.isActive) {
-			capturedContinuation.cancel()
+		if (::installerContinuation.isInitialized && installerContinuation.isActive) {
+			installerContinuation.cancel()
 		}
 	}
 
-	private var NOTIFICATION_ID = 18475
-	private lateinit var capturedContinuation: CancellableContinuation<InstallResult>
-	private val installScope = CoroutineScope(Dispatchers.Default)
 	private val actionInstallPackageContract = ActionInstallPackageContract()
+	private val installerScope = CoroutineScope(Dispatchers.Default)
+	private var notificationId = 18475
 	private var currentApkSources: Array<out ApkSource> = emptyArray()
 	private var activityFirstCreated = true
+	private lateinit var installerContinuation: CancellableContinuation<InstallResult>
 
 	private val installFinishedCallback = MutableSharedFlow<Unit>(
 		extraBufferCapacity = 1,
@@ -317,7 +316,7 @@ object PackageInstaller {
 						.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 					context.startActivity(wrapperIntent)
 				} else {
-					capturedContinuation.cancel(IllegalArgumentException("confirmationIntent was null."))
+					installerContinuation.cancel(IllegalArgumentException("confirmationIntent was null."))
 				}
 				return
 			}
@@ -342,7 +341,7 @@ object PackageInstaller {
 	}
 
 	private fun installPackages(apkFiles: Array<out ApkSource>, callback: PackageInstallerCallback) {
-		installScope.launch {
+		installerScope.launch {
 			try {
 				launch(Dispatchers.Main) {
 					progress.collect { callback.onProgressChanged(it) }
@@ -368,7 +367,6 @@ object PackageInstaller {
 		if (apkFiles.isEmpty()) {
 			return InstallResult.Failure(InstallFailureCause.Generic("No APKs provided."))
 		}
-		val capturedCoroutineContext = coroutineContext
 		return suspendCancellableCoroutine { continuation ->
 			var sessionId = -1
 			continuation.invokeOnCancellation {
@@ -377,12 +375,12 @@ object PackageInstaller {
 				}
 				onCancellation()
 			}
-			capturedContinuation = continuation
 			if (hasActiveSession) {
 				continuation.cancel(IllegalStateException("Can't install while another install session is active."))
 			}
 			hasActiveSession = true
-			CoroutineScope(capturedCoroutineContext + Dispatchers.IO).launch {
+			installerContinuation = continuation
+			CoroutineScope(continuation.context + Dispatchers.IO).launch main@{
 				try {
 					currentApkSources = apkFiles
 					if (!usePackageInstallerApi) {
@@ -397,7 +395,7 @@ object PackageInstaller {
 						progressJob.cancel()
 						_progress.makeIndeterminate()
 						displayNotification(apkUri = apkUri)
-						return@launch
+						return@main
 					}
 					localBroadcastManager.registerReceiver(
 						installationEventsReceiver,
@@ -408,11 +406,11 @@ object PackageInstaller {
 						sessionParams.setInstallReason(PackageManager.INSTALL_REASON_USER)
 					}
 					sessionId = packageInstaller.createSession(sessionParams)
-					packageInstaller.openSession(sessionId).use {
+					packageInstaller.openSession(sessionId).use { session ->
 						withContext(Dispatchers.Main) {
 							packageInstaller.registerSessionCallback(packageInstallerSessionObserver)
 						}
-						it.copyApksFrom(apkFiles)
+						session.copyApksFrom(apkFiles)
 						displayNotification(sessionId = sessionId)
 					}
 				} catch (e: Throwable) {
@@ -423,7 +421,7 @@ object PackageInstaller {
 	}
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	private suspend inline fun PackageInstaller.Session.copyApksFrom(apkFiles: Array<out ApkSource>) = coroutineScope {
+	private suspend inline fun PackageInstaller.Session.copyApksFrom(apkFiles: Array<out ApkSource>) {
 		val totalLength = apkFiles.map { it.length }.sum()
 		var transferredBytes = 0L
 		for ((index, apkFile) in apkFiles.withIndex()) {
@@ -456,10 +454,10 @@ object PackageInstaller {
 		}
 		currentApkSources.forEach { it.clearTempFiles() }
 		currentApkSources = emptyArray()
-		notificationManager.cancel(NOTIFICATION_ID)
+		notificationManager.cancel(notificationId)
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
-		CoroutineScope(capturedContinuation.context + NonCancellable).launch {
+		CoroutineScope(installerContinuation.context + NonCancellable).launch {
 			_progress.reset()
 			installFinishedCallback.emit(Unit)
 			activityFirstCreated = true
@@ -469,7 +467,7 @@ object PackageInstaller {
 
 	private fun finishInstallation(result: InstallResult) {
 		onCancellation()
-		capturedContinuation.resume(result)
+		installerContinuation.resume(result)
 	}
 
 	private fun displayNotification(sessionId: Int? = null, apkUri: Uri? = null) {
@@ -490,7 +488,7 @@ object PackageInstaller {
 		)
 		showNotification(
 			fullScreenIntent,
-			++NOTIFICATION_ID,
+			++notificationId,
 			R.string.ssi_prompt_install_title,
 			R.string.ssi_prompt_install_message
 		)
@@ -512,7 +510,7 @@ object PackageInstaller {
 						// This is needed to resume the coroutine with failure on reasons which are not
 						// handled in installationEventsReceiver. For example, "There was a problem
 						// parsing the package" error falls under that.
-						if (sessionInfo.progress < 0.81 && capturedContinuation.isActive) {
+						if (sessionInfo.progress < 0.81 && installerContinuation.isActive) {
 							abandonSession(sessionId)
 							finishInstallation(InstallResult.Failure())
 							return@main
