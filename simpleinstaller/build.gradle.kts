@@ -46,7 +46,7 @@ android {
 }
 
 dependencies {
-	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 	implementation("androidx.appcompat:appcompat:1.4.0")
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
 	implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.0.0")
