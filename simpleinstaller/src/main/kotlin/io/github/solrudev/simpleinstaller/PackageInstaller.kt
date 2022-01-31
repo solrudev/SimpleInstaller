@@ -34,16 +34,19 @@ import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetExc
 import io.github.solrudev.simpleinstaller.exceptions.SplitPackagesNotSupportedException
 import io.github.solrudev.simpleinstaller.exceptions.UnsupportedUriSchemeException
 import io.github.solrudev.simpleinstaller.utils.*
-import io.github.solrudev.simpleinstaller.utils.extensions.*
+import io.github.solrudev.simpleinstaller.utils.extensions.clearTurnScreenOnSettings
+import io.github.solrudev.simpleinstaller.utils.extensions.turnScreenOnWhenLocked
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.emitAll
 import java.io.File
 import kotlin.coroutines.resume
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
 private const val REQUEST_CODE = 6541
-private const val ACTION_INSTALLATION_STATUS = "io.github.solrudev.simpleinstaller.INSTALLATION_STATUS"
 
 /**
  * A singleton which provides Android packages install functionality.
@@ -276,6 +279,7 @@ object PackageInstaller {
 		}
 	}
 
+	private val actionInstallationStatus by lazy { "${SimpleInstaller.applicationContext.packageName}.INSTALLATION_STATUS" }
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private val installerScope = CoroutineScope(Dispatchers.Default)
 	private var notificationId = 18475
@@ -302,7 +306,7 @@ object PackageInstaller {
 	private val installationEventsReceiver = object : BroadcastReceiver() {
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 		override fun onReceive(context: Context, intent: Intent) {
-			if (intent.action != ACTION_INSTALLATION_STATUS) {
+			if (intent.action != actionInstallationStatus) {
 				return
 			}
 			val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
@@ -399,7 +403,7 @@ object PackageInstaller {
 					}
 					localBroadcastManager.registerReceiver(
 						installationEventsReceiver,
-						IntentFilter(ACTION_INSTALLATION_STATUS)
+						IntentFilter(actionInstallationStatus)
 					)
 					val sessionParams = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -553,7 +557,7 @@ object PackageInstaller {
 				SimpleInstaller.applicationContext,
 				InstallationEventsReceiver::class.java
 			).apply {
-				action = ACTION_INSTALLATION_STATUS
+				action = actionInstallationStatus
 			}
 			val receiverPendingIntent = PendingIntent.getBroadcast(
 				SimpleInstaller.applicationContext,
