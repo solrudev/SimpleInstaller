@@ -19,7 +19,7 @@ internal val Uri.length: Long
 		} catch (e: FileNotFoundException) {
 			null
 		}?.let {
-			// AssetFileDescriptor doesn't implement Closable on old Android versions
+			// AssetFileDescriptor doesn't implement Closeable on old Android versions
 			@Suppress("ConvertTryFinallyToUseCall")
 			try {
 				return@let it.length
