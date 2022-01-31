@@ -279,7 +279,7 @@ object PackageInstaller {
 		}
 	}
 
-	private val actionInstallationStatus by lazy { "${SimpleInstaller.applicationContext.packageName}.INSTALLATION_STATUS" }
+	private val actionInstallationStatus by lazy { "${SimpleInstaller.packageName}.INSTALLATION_STATUS" }
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private val installerScope = CoroutineScope(Dispatchers.Default)
 	private var notificationId = 18475
