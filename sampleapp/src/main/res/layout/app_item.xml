@@ -46,12 +46,4 @@
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toEndOf="@+id/appIcon" />
 
-	<View
-		android:id="@+id/divider"
-		android:layout_width="0dp"
-		android:layout_height="1dp"
-		android:background="?android:attr/listDivider"
-		app:layout_constraintBottom_toTopOf="parent"
-		app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

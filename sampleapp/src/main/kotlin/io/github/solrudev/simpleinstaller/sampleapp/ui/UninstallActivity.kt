@@ -10,12 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import io.github.solrudev.simpleinstaller.sampleapp.AppData
 import io.github.solrudev.simpleinstaller.sampleapp.databinding.UninstallActivityBinding
 import io.github.solrudev.simpleinstaller.sampleapp.viewmodels.UninstallViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
@@ -32,6 +33,7 @@ class UninstallActivity : AppCompatActivity() {
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 		val adapter = AppsListAdapter { onAppClick(it) }
 		binding.recyclerView.adapter = adapter
+		binding.recyclerView.addItemDecoration(DividerItemDecoration(this, LinearLayoutManager.VERTICAL))
 
 		if (savedInstanceState == null) {
 			binding.appsLoadingSpinner.visibility = View.VISIBLE
