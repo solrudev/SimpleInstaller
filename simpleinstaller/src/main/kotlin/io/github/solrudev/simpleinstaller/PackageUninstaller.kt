@@ -2,8 +2,10 @@ package io.github.solrudev.simpleinstaller
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import io.github.solrudev.simpleinstaller.activityresult.DeletePackageContract
 import io.github.solrudev.simpleinstaller.activityresult.UninstallPackageContract
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
 import io.github.solrudev.simpleinstaller.utils.extensions.clearTurnScreenOnSettings
@@ -101,7 +103,9 @@ object PackageUninstaller {
 		}
 	}
 
-	private val uninstallPackageContract = UninstallPackageContract()
+	private val uninstallPackageContract =
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) DeletePackageContract() else UninstallPackageContract()
+
 	private val uninstallerScope = CoroutineScope(Dispatchers.Default)
 	private var notificationId = 34187
 	private lateinit var uninstallerContinuation: CancellableContinuation<Boolean>
