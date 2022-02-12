@@ -77,7 +77,7 @@ tasks {
 
 					pom {
 						name.set(publishArtifactId)
-						description.set("Android packages un/install library")
+						description.set("Easy to use Android package installer wrapper leveraging Kotlin coroutines (API 16+)")
 						url.set("https://github.com/solrudev/SimpleInstaller")
 
 						licenses {
