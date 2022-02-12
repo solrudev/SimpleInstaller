@@ -1,3 +1,5 @@
+val androidGradleVersion: String by rootProject.extra
+
 plugins {
 	id("com.android.application")
 	kotlin("android")
@@ -40,8 +42,8 @@ android {
 }
 
 dependencies {
-	kapt("androidx.databinding:databinding-compiler:7.0.4")
+	kapt("androidx.databinding:databinding-compiler:$androidGradleVersion")
 	implementation("androidx.activity:activity-ktx:1.4.0")
-	implementation("com.google.android.material:material:1.4.0")
+	implementation("com.google.android.material:material:1.5.0")
 	implementation(project(":simpleinstaller"))
 }
