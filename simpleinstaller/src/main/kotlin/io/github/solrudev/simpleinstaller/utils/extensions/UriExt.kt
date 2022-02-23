@@ -44,3 +44,7 @@ internal val Uri.length: Long
 				}
 			} ?: -1L
 	}
+
+@get:JvmSynthetic
+internal val Uri.isSupported: Boolean
+	get() = scheme == ContentResolver.SCHEME_FILE || scheme == ContentResolver.SCHEME_CONTENT

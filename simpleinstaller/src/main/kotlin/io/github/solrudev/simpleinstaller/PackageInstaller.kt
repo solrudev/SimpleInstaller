@@ -3,10 +3,12 @@
 package io.github.solrudev.simpleinstaller
 
 import android.app.PendingIntent
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
-import android.content.res.AssetFileDescriptor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,10 +22,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.solrudev.simpleinstaller.activityresult.ActionInstallPackageContract
 import io.github.solrudev.simpleinstaller.apksource.ApkSource
-import io.github.solrudev.simpleinstaller.apksource.AssetFileDescriptorApkSource
-import io.github.solrudev.simpleinstaller.apksource.FileApkSource
-import io.github.solrudev.simpleinstaller.apksource.UriApkSource
-import io.github.solrudev.simpleinstaller.apksource.utils.toApkSourceArray
 import io.github.solrudev.simpleinstaller.data.InstallFailureCause
 import io.github.solrudev.simpleinstaller.data.InstallResult
 import io.github.solrudev.simpleinstaller.data.ProgressData
@@ -32,7 +30,6 @@ import io.github.solrudev.simpleinstaller.data.utils.reset
 import io.github.solrudev.simpleinstaller.data.utils.tryEmit
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
 import io.github.solrudev.simpleinstaller.exceptions.SplitPackagesNotSupportedException
-import io.github.solrudev.simpleinstaller.exceptions.UnsupportedUriSchemeException
 import io.github.solrudev.simpleinstaller.utils.*
 import io.github.solrudev.simpleinstaller.utils.extensions.clearTurnScreenOnSettings
 import io.github.solrudev.simpleinstaller.utils.extensions.turnScreenOnWhenLocked
@@ -42,7 +39,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.emitAll
-import java.io.File
 import kotlin.coroutines.resume
 
 private const val APK_URI_KEY = "PACKAGE_INSTALLER_APK_URI"
@@ -92,44 +88,6 @@ object PackageInstaller {
 	}
 
 	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmSynthetic
-	suspend fun installSplitPackage(vararg apkFiles: Uri): InstallResult {
-		apkFiles.forEach {
-			if (!isUriSupported(it)) {
-				throw UnsupportedUriSchemeException(it)
-			}
-		}
-		return installSplitPackage(*apkFiles.toApkSourceArray())
-	}
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmSynthetic
-	suspend fun installSplitPackage(vararg apkFiles: AssetFileDescriptor) =
-		installSplitPackage(*apkFiles.toApkSourceArray())
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [File] objects representing split APK files.
-	 * @return [InstallResult]
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmSynthetic
-	suspend fun installSplitPackage(vararg apkFiles: File) = installSplitPackage(*apkFiles.toApkSourceArray())
-
-	/**
 	 * Starts an install session, displays a full-screen intent or notification (depending on firmware)
 	 * with prompting user to confirm installation and suspends until it finishes.
 	 *
@@ -139,33 +97,6 @@ object PackageInstaller {
 	 */
 	@JvmSynthetic
 	suspend fun installPackage(apkFile: ApkSource) = installPackages(arrayOf(apkFile))
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
-	 * @return [InstallResult]
-	 */
-	@JvmSynthetic
-	suspend fun installPackage(apkFile: Uri) = installPackage(UriApkSource(apkFile))
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [AssetFileDescriptor] of APK file.
-	 * @return [InstallResult]
-	 */
-	@JvmSynthetic
-	suspend fun installPackage(apkFile: AssetFileDescriptor) = installPackage(AssetFileDescriptorApkSource(apkFile))
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [File] object representing APK file.
-	 * @return [InstallResult]
-	 */
-	@JvmSynthetic
-	suspend fun installPackage(apkFile: File) = installPackage(FileApkSource(apkFile))
 
 	/**
 	 * See [installSplitPackage].
@@ -184,48 +115,6 @@ object PackageInstaller {
 	}
 
 	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [Uri]s of split APK files. Must be file: or content: URIs.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmStatic
-	fun installSplitPackage(vararg apkFiles: Uri, callback: PackageInstallerCallback) {
-		apkFiles.forEach {
-			if (!isUriSupported(it)) {
-				throw UnsupportedUriSchemeException(it)
-			}
-		}
-		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
-	}
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [AssetFileDescriptor]s of split APK files.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmStatic
-	fun installSplitPackage(vararg apkFiles: AssetFileDescriptor, callback: PackageInstallerCallback) =
-		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
-
-	/**
-	 * See [installSplitPackage].
-	 *
-	 * @param [apkFiles] [File] objects representing split APK files.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-	@JvmStatic
-	fun installSplitPackage(vararg apkFiles: File, callback: PackageInstallerCallback) =
-		installSplitPackage(apkFiles = apkFiles.toApkSourceArray(), callback)
-
-	/**
 	 * See [installPackage].
 	 *
 	 * @param [apkFile] Any source of APK file implemented by [ApkSource].
@@ -235,39 +124,6 @@ object PackageInstaller {
 	@JvmStatic
 	fun installPackage(apkFile: ApkSource, callback: PackageInstallerCallback) =
 		installPackages(arrayOf(apkFile), callback)
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [Uri] of APK file. Must be a file: or content: URI.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@JvmStatic
-	fun installPackage(apkFile: Uri, callback: PackageInstallerCallback) =
-		installPackage(UriApkSource(apkFile), callback)
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [AssetFileDescriptor] of APK file.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@JvmStatic
-	fun installPackage(apkFile: AssetFileDescriptor, callback: PackageInstallerCallback) =
-		installPackage(AssetFileDescriptorApkSource(apkFile), callback)
-
-	/**
-	 * See [installPackage].
-	 *
-	 * @param [apkFile] [File] object representing APK file.
-	 * @param [callback] A callback object implementing [PackageInstallerCallback] interface.
-	 * Its methods are called on main thread.
-	 */
-	@JvmStatic
-	fun installPackage(apkFile: File, callback: PackageInstallerCallback) =
-		installPackage(FileApkSource(apkFile), callback)
 
 	/**
 	 * Cancels current coroutine and abandons current install session.
@@ -426,7 +282,7 @@ object PackageInstaller {
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 	private suspend inline fun PackageInstaller.Session.copyApksFrom(apkFiles: Array<out ApkSource>) {
-		val totalLength = apkFiles.map { it.length }.sum()
+		val totalLength = apkFiles.sumOf { it.length }
 		var transferredBytes = 0L
 		for ((index, apkFile) in apkFiles.withIndex()) {
 			val apkStream = apkFile.openInputStream()
@@ -441,9 +297,6 @@ object PackageInstaller {
 			transferredBytes += apkLength
 		}
 	}
-
-	private fun isUriSupported(uri: Uri) =
-		uri.scheme == ContentResolver.SCHEME_FILE || uri.scheme == ContentResolver.SCHEME_CONTENT
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 	private fun abandonSession(sessionId: Int) = try {
