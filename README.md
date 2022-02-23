@@ -130,7 +130,7 @@ suspend fun uninstallPackage(packageName: String): Boolean
 ```
 Returns true if uninstall succeeded, false otherwise.
 
-You can get if `PackageInstaller` has an active session through a property:
+You can get if `PackageUninstaller` has an active session through a property:
 ```kotlin
 var hasActiveSession: Boolean
 ```
