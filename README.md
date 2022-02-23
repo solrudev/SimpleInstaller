@@ -2,6 +2,21 @@
 [![Build Status](https://github.com/solrudev/SimpleInstaller/workflows/Publish/badge.svg)](https://github.com/solrudev/SimpleInstaller/actions?query=workflow%3A%22Publish%22)
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.solrudev/simpleinstaller.svg)
 
+## Contents
+* [Overview](#overview)
+    + [Gradle](#gradle)
+* [Usage](#usage)
+    + [Installation](#installation)
+        - [Kotlin](#kotlin)
+        - [Java](#java)
+        - [Install permission](#install-permission)
+        - [ApkSource](#apksource)
+    + [Uninstallation](#uninstallation)
+        - [Kotlin](#kotlin-1)
+        - [Java](#java-1)
+* [Sample app](#sample-app)
+* [License](#license)
+
 ## Overview
 SimpleInstaller is an Android library which provides easy to use abstraction over Android packages install and uninstall functionality leveraging Kotlin coroutines.
 
@@ -9,7 +24,7 @@ It supports Android versions starting from 4.1 Jelly Bean. Package installer pro
 
 SimpleInstaller was developed with deferred execution in mind. You can launch an install or uninstall session when user is not interacting with your app directly, for example, while foreground service is running and your application was removed from recents. The way it works is that the user is shown a high-priority notification which launches a standard Android confirmation by clicking on it, or full-screen intent with confirmation (depends on firmware).
 
-## Gradle
+### Gradle
 All versions are available [here](https://s01.oss.sonatype.org/#nexus-search;gav~io.github.solrudev~simpleinstaller~~~).
 ```kotlin
 implementation("io.github.solrudev:simpleinstaller:x.y.z")
@@ -17,7 +32,7 @@ implementation("io.github.solrudev:simpleinstaller:x.y.z")
 Replace "x.y.z" with the latest version.
 
 ## Usage
-First, you need to initialize SimpleInstaller. To do this, add the following line to your Application class' `onCreate()` method:
+First, you need to initialize SimpleInstaller. To do this, add the following line to your Application class' `onCreate()` method (valid for both Kotlin and Java):
 ```kotlin
 SimpleInstaller.initialize(this)
 ```
@@ -27,23 +42,58 @@ SimpleInstaller.initialize(this, R.drawable.your_notification_icon)
 ```
 
 ### Installation
-There are two methods for installation, each of them receives either `Uri`, `AssetFileDescriptor`, `File` or custom `ApkSource`. URIs must have `file:` or `content:` scheme.
+Installation functionality is provided by `PackageInstaller` singleton class (`object` in Kotlin).
+
+There are two separate methods for monolithic and split packages.
+
+#### Kotlin
 ```kotlin
-suspend fun PackageInstaller.installPackage(apkFile): InstallResult
+suspend fun installPackage(apkFile: TYPE): InstallResult
 ```
 ```kotlin
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-suspend fun PackageInstaller.installSplitPackage(vararg apkFiles): InstallResult
+suspend fun installSplitPackage(vararg apkFiles: TYPE): InstallResult
 ```
 These methods return an `InstallResult` object, which can be either `Success` or `Failure`. `Failure` object may contain a cause of failure in its `cause` property.
 
-They also have non-suspend variants which accept `PackageInstallerCallback` callback as a second parameter.
+You can get if `PackageInstaller` has an active session through a property:
 ```kotlin
-fun PackageInstaller.installPackage(apkFile, callback: PackageInstallerCallback)
+var hasActiveSession: Boolean
 ```
-```kotlin
+
+#### Java
+```java
+static void installPackage(ApkSource apkFile, PackageInstallerCallback callback)
+```
+```java
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-fun PackageInstaller.installSplitPackage(vararg apkFiles, callback: PackageInstallerCallback)
+static void installSplitPackage(ApkSource[] apkFiles, PackageInstallerCallback callback)
+```
+`PackageInstallerCallback` has the following interface:
+```java
+interface PackageInstallerCallback {
+    void onSuccess();
+    void onFailure(@Nullable InstallFailureCause cause);
+    void onException(Throwable exception);
+    void onCanceled();
+    void onProgressChanged(ProgressData progress);
+}
+```
+Java variants accept only [`ApkSource`](#ApkSource). If you need to pass [other types supported by SimpleInstaller out-of-the-box](#ApkSource), use methods from `PackageInstallerHelper`.
+```java
+static void installPackage(TYPE apkFile, PackageInstallerCallback callback)
+```
+```java
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+static void installSplitPackage(TYPE[] apkFiles, PackageInstallerCallback callback)
+```
+You can get if `PackageInstaller` has an active session through a getter method:
+```java
+static boolean getHasActiveSession()
+```
+Also it's possible to cancel current install session:
+```java
+static void cancel()
 ```
 
 #### Install permission
@@ -52,7 +102,7 @@ On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INS
 In your Activity:
 ```kotlin
 val requestInstallPermissionLauncher = registerForActivityResult(InstallPermissionContract()) { booleanResult ->
-    if (booleanResult) { /* do something */ }
+	if (booleanResult) { /* do something */ }
 }
 ```
 ...
@@ -69,45 +119,38 @@ abstract fun openInputStream(): InputStream?
 abstract suspend fun getUri(): Uri
 open fun clearTempFiles()
 ```
-SimpleInstaller has implementations for `Uri`, `AssetFileDescriptor` and `File`. You can provide your own implementation and pass it to `PackageInstaller.installPackage` or `PackageInstaller.installSplitPackage`.
+SimpleInstaller has out-of-the-box implementations for `Uri` (URIs must have `file:` or `content:` scheme), `AssetFileDescriptor` and `File`. You can provide your own implementation and pass it to `installPackage()` or `installSplitPackage()`.
 
 ### Uninstallation
+Uninstallation functionality is provided by `PackageUninstaller` singleton class (`object` in Kotlin).
+
+#### Kotlin
 ```kotlin
-suspend fun PackageUninstaller.uninstallPackage(packageName: String): Boolean
+suspend fun uninstallPackage(packageName: String): Boolean
 ```
 Returns true if uninstall succeeded, false otherwise.
 
-This method also has non-suspend variant which accepts `PackageUninstallerCallback` callback as a second parameter.
+You can get if `PackageInstaller` has an active session through a property:
 ```kotlin
-fun PackageUninstaller.uninstallPackage(packageName: String, callback: PackageUninstallerCallback)
+var hasActiveSession: Boolean
 ```
 
-## Java interoperability
-`SimpleInstaller.initialize()` is available statically and has a separate overload with notification icon resource ID as a parameter.
-
-There are static methods in `PackageInstaller` and `PackageUninstaller` which accept callbacks as a second parameter. They are wrappers around Kotlin suspend functions. Callbacks have the following interfaces:
-```kotlin
-interface PackageInstallerCallback {
-    fun onSuccess()
-    fun onFailure(cause: InstallFailureCause?)
-    fun onException(exception: Throwable)
-    fun onCanceled()
-    fun onProgressChanged(progress: ProgressData)
-}
+#### Java
+```java
+static void uninstallPackage(String packageName, PackageUninstallerCallback callback)
 ```
-```kotlin
+`PackageUninstallerCallback` has the following interface:
+```java
 interface PackageUninstallerCallback {
-    fun onFinished(success: Boolean)
-    fun onException(exception: Throwable)
-    fun onCanceled()
+    void onFinished(boolean success);
+    void onException(Throwable exception);
+    void onCanceled();
 }
 ```
-`hasActiveSession` property can be accessed statically:
-```kotlin
-PackageInstaller.getHasActiveSession()
-PackageUninstaller.getHasActiveSession()
+You can get if `PackageUninstaller` has an active session through a getter method:
+```java
+static boolean getHasActiveSession()
 ```
-Current install/uninstall session can be canceled through a static `cancel()` method.
 
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application selected from the installed apps list. Go [here](https://github.com/solrudev/SimpleInstaller/tree/master/sampleapp) to see sources.
