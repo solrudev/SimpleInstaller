@@ -310,10 +310,10 @@ object PackageInstaller {
 			localBroadcastManager.unregisterReceiver(installationEventsReceiver)
 		}
 		currentApkSources.forEach { it.clearTempFiles() }
-		currentApkSources = emptyArray()
 		notificationManager.cancel(notificationId)
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
+		currentApkSources = emptyArray()
 		CoroutineScope(installerContinuation.context + NonCancellable).launch {
 			_progress.reset()
 			installFinishedCallback.emit(Unit)
