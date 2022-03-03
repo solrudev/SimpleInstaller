@@ -11,7 +11,7 @@ plugins {
 }
 
 buildscript {
-	val androidGradleVersion by extra("7.1.1")
+	val androidGradleVersion by extra("7.1.2")
 	repositories {
 		google()
 		mavenCentral()
