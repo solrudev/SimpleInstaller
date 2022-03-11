@@ -74,9 +74,9 @@ static void installSplitPackage(ApkSource[] apkFiles, PackageInstallerCallback c
 interface PackageInstallerCallback {
     void onSuccess();
     void onFailure(@Nullable InstallFailureCause cause);
-    void onException(Throwable exception);
+    void onException(@NonNull Throwable exception);
     void onCanceled();
-    void onProgressChanged(ProgressData progress);
+    void onProgressChanged(@NonNull ProgressData progress);
 }
 ```
 Java variants accept only [`ApkSource`](#ApkSource). If you need to pass [other types supported by SimpleInstaller out-of-the-box](#ApkSource), use methods from `PackageInstallerHelper`.
@@ -143,7 +143,7 @@ static void uninstallPackage(String packageName, PackageUninstallerCallback call
 ```java
 interface PackageUninstallerCallback {
     void onFinished(boolean success);
-    void onException(Throwable exception);
+    void onException(@NonNull Throwable exception);
     void onCanceled();
 }
 ```
