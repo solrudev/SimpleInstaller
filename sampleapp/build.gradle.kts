@@ -7,12 +7,13 @@ plugins {
 }
 
 android {
-	compileSdk = 31
+	compileSdk = 32
+	buildToolsVersion = "32.0.0"
 
 	defaultConfig {
 		applicationId = "io.github.solrudev.simpleinstaller.sampleapp"
 		minSdk = 16
-		targetSdk = 31
+		targetSdk = 32
 		versionCode = 1
 		versionName = "1.0"
 	}

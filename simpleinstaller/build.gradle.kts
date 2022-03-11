@@ -10,11 +10,12 @@ plugins {
 }
 
 android {
-	compileSdk = 31
+	compileSdk = 32
+	buildToolsVersion = "32.0.0"
 
 	defaultConfig {
 		minSdk = 16
-		targetSdk = 31
+		targetSdk = 32
 		version = publishVersion
 		consumerProguardFiles("consumer-rules.pro")
 	}
