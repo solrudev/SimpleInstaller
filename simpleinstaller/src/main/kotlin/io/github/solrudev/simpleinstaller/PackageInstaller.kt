@@ -353,7 +353,7 @@ object PackageInstaller {
 					packageInstaller.getSessionInfo(sessionId)?.let { sessionInfo ->
 						// Hacky workaround: progress not going higher than 0.8 means install failed.
 						// This is needed to resume the coroutine with failure on reasons which are not
-						// handled in installationEventsReceiver. For example, "There was a problem
+						// handled in onPackageInstallerStatusChanged. For example, "There was a problem
 						// parsing the package" error falls under that.
 						if (sessionInfo.progress < 0.81 && installerContinuation.isActive) {
 							abandonSession(sessionId)
