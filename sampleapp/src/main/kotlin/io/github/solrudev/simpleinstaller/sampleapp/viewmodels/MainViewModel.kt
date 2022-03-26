@@ -60,12 +60,17 @@ class MainViewModel : ViewModel() {
 						result.cause?.message?.let { Log.i(this@MainViewModel::class.java.name, it) }
 					}
 				}
-			} catch (e: Throwable) {
-				_text.value = R.string.install_failed
-				if (e !is CancellationException) {
-					Log.e(this@MainViewModel::class.java.name, "", e)
+			} catch (t: Throwable) {
+				_text.value = if (t !is CancellationException) {
+					Log.e(this@MainViewModel::class.java.name, "", t)
+					R.string.install_failed
+				} else {
+					R.string.install_canceled
 				}
 			} finally {
+				_isProgressIndeterminate.value = false
+				_progressMax.value = 100
+				_progress.value = 0
 				_installButtonText.value = R.string.install
 			}
 		}
@@ -73,6 +78,5 @@ class MainViewModel : ViewModel() {
 
 	fun cancel() {
 		installJob?.cancel()
-		_text.value = R.string.install_canceled
 	}
 }

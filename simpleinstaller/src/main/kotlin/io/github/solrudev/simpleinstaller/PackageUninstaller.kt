@@ -81,12 +81,12 @@ object PackageUninstaller {
 			try {
 				val result = uninstallPackage(packageName)
 				withContext(Dispatchers.Main) { callback.onFinished(result) }
-			} catch (e: Throwable) {
-				if (e is CancellationException) {
+			} catch (t: Throwable) {
+				if (t is CancellationException) {
 					withContext(Dispatchers.Main + NonCancellable) { callback.onCanceled() }
 					return@launch
 				}
-				withContext(Dispatchers.Main + NonCancellable) { callback.onException(e) }
+				withContext(Dispatchers.Main + NonCancellable) { callback.onException(t) }
 			} finally {
 				coroutineContext[Job]?.cancel()
 			}

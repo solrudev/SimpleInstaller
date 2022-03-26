@@ -23,7 +23,6 @@ import io.github.solrudev.simpleinstaller.data.InstallFailureCause
 import io.github.solrudev.simpleinstaller.data.InstallResult
 import io.github.solrudev.simpleinstaller.data.ProgressData
 import io.github.solrudev.simpleinstaller.data.utils.makeIndeterminate
-import io.github.solrudev.simpleinstaller.data.utils.reset
 import io.github.solrudev.simpleinstaller.data.utils.tryEmit
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
 import io.github.solrudev.simpleinstaller.exceptions.SplitPackagesNotSupportedException
@@ -203,14 +202,13 @@ object PackageInstaller {
 					is InstallResult.Success -> withContext(Dispatchers.Main) { callback.onSuccess() }
 					is InstallResult.Failure -> withContext(Dispatchers.Main) { callback.onFailure(result.cause) }
 				}
-			} catch (e: Throwable) {
-				if (e is CancellationException) {
+			} catch (t: Throwable) {
+				if (t is CancellationException) {
 					withContext(Dispatchers.Main + NonCancellable) { callback.onCanceled() }
 					return@launch
 				}
-				withContext(Dispatchers.Main + NonCancellable) { callback.onException(e) }
+				withContext(Dispatchers.Main + NonCancellable) { callback.onException(t) }
 			} finally {
-				withContext(Dispatchers.Main + NonCancellable) { callback.onProgressChanged(ProgressData()) }
 				coroutineContext[Job]?.cancel()
 			}
 		}
@@ -262,8 +260,8 @@ object PackageInstaller {
 						session.copyApksFrom(apkFiles)
 						displayNotification(sessionId = sessionId)
 					}
-				} catch (e: Throwable) {
-					continuation.cancel(e)
+				} catch (t: Throwable) {
+					continuation.cancel(t)
 				}
 			}
 		}
@@ -302,7 +300,6 @@ object PackageInstaller {
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
 		CoroutineScope(installerContinuation.context + NonCancellable).launch {
-			_progress.reset()
 			installFinishedCallback.emit(Unit)
 		}
 		currentApkSources = emptyArray()

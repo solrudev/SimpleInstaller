@@ -35,7 +35,8 @@ internal suspend fun copy(
 					sink.write(buffer, buffer.size)
 					currentProgress++
 					if (currentProgress % progressRatio == 0L) {
-						onProgressChanged(ProgressData((currentProgress / progressRatio).toInt(), progressMax))
+						val progress = (currentProgress.toDouble() / (progressRatio * progressMax) * 100).toInt()
+						onProgressChanged(ProgressData(progress, 100))
 					}
 				}
 				sink.flush()
