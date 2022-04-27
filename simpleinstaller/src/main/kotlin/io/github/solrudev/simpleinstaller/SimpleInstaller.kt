@@ -1,8 +1,11 @@
 package io.github.solrudev.simpleinstaller
 
+import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.DrawableRes
 import io.github.solrudev.simpleinstaller.exceptions.SimpleInstallerReinitializeException
@@ -28,6 +31,11 @@ object SimpleInstaller {
 
 	private var _applicationContext: Context? = null
 
+	private val configurationChangesCallback = object : ComponentCallbacks {
+		override fun onConfigurationChanged(newConfig: Configuration) = createNotificationChannel()
+		override fun onLowMemory() {}
+	}
+
 	/**
 	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
 	 *
@@ -46,10 +54,18 @@ object SimpleInstaller {
 		}
 		_applicationContext = applicationContext.applicationContext
 		this.notificationIconId = notificationIconId
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-		val channelIdString = this.applicationContext.getString(R.string.ssi_notification_channel_id)
-		val channelName = this.applicationContext.getString(R.string.ssi_notification_channel_name)
-		val channelDescription = this.applicationContext.getString(R.string.ssi_notification_channel_description)
+		createNotificationChannel()
+		val application = _applicationContext as? Application
+		application?.registerComponentCallbacks(configurationChangesCallback)
+	}
+
+	private fun createNotificationChannel() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			return
+		}
+		val channelIdString = applicationContext.getString(R.string.ssi_notification_channel_id)
+		val channelName = applicationContext.getString(R.string.ssi_notification_channel_name)
+		val channelDescription = applicationContext.getString(R.string.ssi_notification_channel_description)
 		val importance = NotificationManager.IMPORTANCE_HIGH
 		val channel = NotificationChannel(channelIdString, channelName, importance).apply {
 			description = channelDescription
