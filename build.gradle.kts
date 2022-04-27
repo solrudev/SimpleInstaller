@@ -11,14 +11,14 @@ plugins {
 }
 
 buildscript {
-	val androidGradleVersion by extra("7.1.2")
+	val androidGradleVersion by extra("7.1.3")
 	repositories {
 		google()
 		mavenCentral()
 	}
 	dependencies {
 		classpath("com.android.tools.build:gradle:$androidGradleVersion")
-		classpath(kotlin("gradle-plugin", "1.6.10"))
+		classpath(kotlin("gradle-plugin", "1.6.21"))
 	}
 }
 
