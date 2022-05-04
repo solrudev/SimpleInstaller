@@ -57,7 +57,6 @@ internal object PackageInstallerImpl : PackageInstaller {
 
 	override val progress = _progress.asSharedFlow()
 
-	@JvmSynthetic
 	override suspend fun installSplitPackage(vararg apkFiles: ApkSource): InstallResult {
 		if (!usePackageInstallerApi) {
 			throw SplitPackagesNotSupportedException()
@@ -65,7 +64,6 @@ internal object PackageInstallerImpl : PackageInstaller {
 		return installPackages(apkFiles)
 	}
 
-	@JvmSynthetic
 	override suspend fun installPackage(apkFile: ApkSource) = installPackages(arrayOf(apkFile))
 
 	override fun installSplitPackage(vararg apkFiles: ApkSource, callback: PackageInstaller.Callback) {
@@ -265,7 +263,9 @@ internal object PackageInstallerImpl : PackageInstaller {
 
 	private fun finishInstallation(result: InstallResult) {
 		onCancellation()
-		installerContinuation.resume(result)
+		if (installerContinuation.isActive) {
+			installerContinuation.resume(result)
+		}
 	}
 
 	private fun displayNotification(sessionId: Int? = null, apkUri: Uri? = null) {
@@ -308,7 +308,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 						// This is needed to resume the coroutine with failure on reasons which are not
 						// handled in onPackageInstallerStatusChanged. For example, "There was a problem
 						// parsing the package" error falls under that.
-						if (sessionInfo.progress < 0.81 && installerContinuation.isActive) {
+						if (sessionInfo.progress < 0.81) {
 							abandonSession(sessionId)
 							finishInstallation(InstallResult.Failure())
 							return@main

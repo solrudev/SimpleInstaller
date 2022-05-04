@@ -98,7 +98,9 @@ internal object PackageUninstallerImpl : PackageUninstaller {
 
 		private val uninstallLauncher = registerForActivityResult(uninstallPackageContract) {
 			onCancellation()
-			uninstallerContinuation.resume(it)
+			if (uninstallerContinuation.isActive) {
+				uninstallerContinuation.resume(it)
+			}
 			finish()
 		}
 
