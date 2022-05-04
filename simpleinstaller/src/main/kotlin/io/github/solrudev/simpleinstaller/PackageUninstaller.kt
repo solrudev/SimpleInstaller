@@ -43,13 +43,13 @@ interface PackageUninstaller {
 	/**
 	 * Default singleton instance of [PackageUninstaller].
 	 */
-	companion object : PackageUninstaller by PackageUninstallerImpl.instance {
+	companion object : PackageUninstaller by PackageUninstallerImpl {
 
 		/**
 		 * Retrieves the default singleton instance of [PackageUninstaller].
 		 */
 		@JvmStatic
-		fun getInstance(): PackageUninstaller = PackageUninstallerImpl.instance
+		fun getInstance(): PackageUninstaller = PackageUninstallerImpl
 	}
 
 	/**

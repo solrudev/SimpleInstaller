@@ -86,13 +86,13 @@ interface PackageInstaller {
 	/**
 	 * Default singleton instance of [PackageInstaller].
 	 */
-	companion object : PackageInstaller by PackageInstallerImpl.instance {
+	companion object : PackageInstaller by PackageInstallerImpl {
 
 		/**
 		 * Retrieves the default singleton instance of [PackageInstaller].
 		 */
 		@JvmStatic
-		fun getInstance(): PackageInstaller = PackageInstallerImpl.instance
+		fun getInstance(): PackageInstaller = PackageInstallerImpl
 	}
 
 	/**

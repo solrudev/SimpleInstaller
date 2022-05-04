@@ -25,7 +25,7 @@ private const val REQUEST_CODE = 4127
 /**
  * A concrete implementation of [PackageUninstaller].
  */
-internal class PackageUninstallerImpl : PackageUninstaller {
+internal object PackageUninstallerImpl : PackageUninstaller {
 
 	override var hasActiveSession = false
 		private set
@@ -96,9 +96,9 @@ internal class PackageUninstallerImpl : PackageUninstaller {
 
 	internal class UninstallLauncherActivity : AppCompatActivity() {
 
-		private val uninstallLauncher = registerForActivityResult(instance.uninstallPackageContract) {
-			instance.onCancellation()
-			instance.uninstallerContinuation.resume(it)
+		private val uninstallLauncher = registerForActivityResult(uninstallPackageContract) {
+			onCancellation()
+			uninstallerContinuation.resume(it)
 			finish()
 		}
 
@@ -114,11 +114,5 @@ internal class PackageUninstallerImpl : PackageUninstaller {
 			super.onDestroy()
 			clearTurnScreenOnSettings()
 		}
-	}
-
-	internal companion object {
-
-		@get:JvmSynthetic
-		internal val instance by lazy(LazyThreadSafetyMode.PUBLICATION) { PackageUninstallerImpl() }
 	}
 }

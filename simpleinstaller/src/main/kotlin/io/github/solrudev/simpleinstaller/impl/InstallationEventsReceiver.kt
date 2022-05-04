@@ -7,8 +7,8 @@ import android.content.Intent
 internal class InstallationEventsReceiver : BroadcastReceiver() {
 
 	override fun onReceive(context: Context, intent: Intent) {
-		if (PackageInstallerImpl.instance.hasActiveSession) {
-			PackageInstallerImpl.instance.onPackageInstallerStatusChanged(context, intent)
+		if (PackageInstallerImpl.hasActiveSession) {
+			PackageInstallerImpl.onPackageInstallerStatusChanged(context, intent)
 		}
 	}
 }

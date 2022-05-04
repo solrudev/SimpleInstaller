@@ -45,7 +45,7 @@ private const val REQUEST_CODE = 6541
 /**
  * A concrete implementation of [PackageInstaller].
  */
-internal class PackageInstallerImpl : PackageInstaller {
+internal object PackageInstallerImpl : PackageInstaller {
 
 	override var hasActiveSession = false
 		private set
@@ -294,23 +294,23 @@ internal class PackageInstallerImpl : PackageInstaller {
 
 	internal class InstallLauncherActivity : AppCompatActivity() {
 
-		private val actionInstallPackageLauncher = registerForActivityResult(instance.actionInstallPackageContract) {
+		private val actionInstallPackageLauncher = registerForActivityResult(actionInstallPackageContract) {
 			val result = if (it) InstallResult.Success else InstallResult.Failure()
-			instance.finishInstallation(result)
+			finishInstallation(result)
 		}
 
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 		private val confirmationIntentLauncher =
 			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 				intent.extras?.getInt(AndroidPackageInstaller.EXTRA_SESSION_ID)?.let main@{ sessionId ->
-					instance.packageInstaller.getSessionInfo(sessionId)?.let { sessionInfo ->
+					packageInstaller.getSessionInfo(sessionId)?.let { sessionInfo ->
 						// Hacky workaround: progress not going higher than 0.8 means install failed.
 						// This is needed to resume the coroutine with failure on reasons which are not
 						// handled in onPackageInstallerStatusChanged. For example, "There was a problem
 						// parsing the package" error falls under that.
-						if (sessionInfo.progress < 0.81 && instance.installerContinuation.isActive) {
-							instance.abandonSession(sessionId)
-							instance.finishInstallation(InstallResult.Failure())
+						if (sessionInfo.progress < 0.81 && installerContinuation.isActive) {
+							abandonSession(sessionId)
+							finishInstallation(InstallResult.Failure())
 							return@main
 						}
 					}
@@ -323,18 +323,18 @@ internal class PackageInstallerImpl : PackageInstaller {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
 			lifecycleScope.launch {
-				instance.installFinishedCallback
+				installFinishedCallback
 					.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
 					.collect { finish() }
 			}
 			if (savedInstanceState != null) return
-			if (instance.activityFirstCreated) {
-				instance.activityFirstCreated = false
-				if (instance.usePackageInstallerApi) {
+			if (activityFirstCreated) {
+				activityFirstCreated = false
+				if (usePackageInstallerApi) {
 					commitSession()
 				}
 			}
-			if (instance.usePackageInstallerApi) {
+			if (usePackageInstallerApi) {
 				intent.extras?.getParcelable<Intent>(Intent.EXTRA_INTENT)?.let {
 					confirmationIntentLauncher.launch(it)
 				}
@@ -351,7 +351,7 @@ internal class PackageInstallerImpl : PackageInstaller {
 				SimpleInstaller.applicationContext,
 				InstallationEventsReceiver::class.java
 			).apply {
-				action = instance.actionInstallationStatus
+				action = actionInstallationStatus
 			}
 			val receiverPendingIntent = PendingIntent.getBroadcast(
 				SimpleInstaller.applicationContext,
@@ -361,7 +361,7 @@ internal class PackageInstallerImpl : PackageInstaller {
 			)
 			val statusReceiver = receiverPendingIntent.intentSender
 			val sessionId = intent.extras?.getInt(AndroidPackageInstaller.EXTRA_SESSION_ID)
-			instance.packageInstaller.openSession(sessionId!!).commit(statusReceiver)
+			packageInstaller.openSession(sessionId!!).commit(statusReceiver)
 		}
 
 		override fun onNewIntent(intent: Intent?) {
@@ -374,11 +374,5 @@ internal class PackageInstallerImpl : PackageInstaller {
 			super.onDestroy()
 			clearTurnScreenOnSettings()
 		}
-	}
-
-	internal companion object {
-
-		@get:JvmSynthetic
-		internal val instance by lazy(LazyThreadSafetyMode.PUBLICATION) { PackageInstallerImpl() }
 	}
 }
