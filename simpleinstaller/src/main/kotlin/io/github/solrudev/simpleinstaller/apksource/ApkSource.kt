@@ -22,11 +22,9 @@ private const val TEMP_APK_FILE_NAME = "temp.apk"
 abstract class ApkSource {
 
 	/**
-	 * A [MutableSharedFlow] of [ProgressData] which represents progress for possible operations on the APK file
-	 * source. It is recommended to emit progress to it when you do any operations on the APK file in your
-	 * implementation of [getUri].
+	 * A [MutableSharedFlow] of [ProgressData].
 	 */
-	protected val _progress = MutableSharedFlow<ProgressData>(
+	private val _progress = MutableSharedFlow<ProgressData>(
 		extraBufferCapacity = 1,
 		onBufferOverflow = BufferOverflow.DROP_OLDEST
 	)
@@ -64,6 +62,13 @@ abstract class ApkSource {
 	}
 
 	/**
+	 * Emits progress for possible operations on the APK file source to private [MutableSharedFlow] of
+	 * [ProgressData]. It is recommended to emit progress to it when you do any operations on the APK file
+	 * in your implementation of [getUri].
+	 */
+	protected suspend fun progress(value: ProgressData) = _progress.emit(value)
+
+	/**
 	 * Creates a temporary cache copy of the APK file. Note that it will be rewritten if it already exists.
 	 * Emits progress to [progress] SharedFlow.
 	 *
@@ -79,7 +84,7 @@ abstract class ApkSource {
 			requireNotNull(inputStream) { "APK InputStream was null." },
 			outputStream,
 			length
-		) { progressData -> _progress.emit(progressData) }
+		) { progressData -> progress(progressData) }
 		return Uri.fromFile(tempApk)
 	}
 }
