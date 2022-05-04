@@ -13,7 +13,7 @@
 
 	<application>
 		<activity
-			android:name=".PackageUninstaller$UninstallLauncherActivity"
+			android:name=".impl.PackageUninstallerImpl$UninstallLauncherActivity"
 			android:exported="false"
 			android:launchMode="singleTask"
 			android:showForAllUsers="true"
@@ -21,7 +21,7 @@
 			android:showWhenLocked="true"
 			tools:ignore="UnusedAttribute" />
 		<activity
-			android:name=".PackageInstaller$InstallLauncherActivity"
+			android:name=".impl.PackageInstallerImpl$InstallLauncherActivity"
 			android:exported="false"
 			android:launchMode="singleTask"
 			android:showForAllUsers="true"
@@ -30,7 +30,7 @@
 			tools:ignore="UnusedAttribute" />
 
 		<receiver
-			android:name=".InstallationEventsReceiver"
+			android:name=".impl.InstallationEventsReceiver"
 			android:exported="false" />
 
 	</application>
