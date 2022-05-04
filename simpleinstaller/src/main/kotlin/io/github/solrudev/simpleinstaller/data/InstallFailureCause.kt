@@ -4,7 +4,7 @@ package io.github.solrudev.simpleinstaller.data
  * Represents the cause of installation failure. Contains string representation in [message] property.
  *
  * May be either [Generic], [Aborted], [Blocked], [Conflict], [Incompatible], [Invalid] or [Storage].
- * @property [message] Detailed string representation of the status, including raw details that are useful for debugging.
+ * @property message Detailed string representation of the status, including raw details that are useful for debugging.
  */
 sealed class InstallFailureCause(open val message: String?) {
 

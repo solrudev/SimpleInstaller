@@ -12,7 +12,7 @@ internal fun isPackageInstalled(packageName: String?): Boolean {
 			PackageManager.GET_ACTIVITIES
 		)
 		true
-	} catch (e: PackageManager.NameNotFoundException) {
+	} catch (_: PackageManager.NameNotFoundException) {
 		false
 	}
 }
