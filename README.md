@@ -108,7 +108,7 @@ static void installSplitPackage(PackageInstaller packageInstaller, TYPE[] apkFil
 ```
 To obtain an instance of `PackageInstaller` use static `getInstance()` method:
 ```java
-PackageInstaller packageInstaller = PackageInstaller.getInstance()
+PackageInstaller packageInstaller = PackageInstaller.getInstance();
 ```
 You can get if `PackageInstaller` has an active session through a getter method:
 ```java
@@ -185,7 +185,7 @@ interface Callback {
 ```
 To obtain an instance of `PackageUninstaller` use static `getInstance()` method:
 ```java
-PackageUninstaller packageUninstaller = PackageUninstaller.getInstance()
+PackageUninstaller packageUninstaller = PackageUninstaller.getInstance();
 ```
 You can get if `PackageUninstaller` has an active session through a getter method:
 ```java
