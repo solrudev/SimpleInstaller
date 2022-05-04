@@ -25,6 +25,7 @@ object SimpleInstaller {
 	internal val packageName: String
 		get() = applicationContext.packageName
 
+	@DrawableRes
 	@get:JvmSynthetic
 	internal var notificationIconId = android.R.drawable.ic_dialog_alert
 		private set
