@@ -20,7 +20,7 @@ sealed class InstallResult {
 	 * Install failed.
 	 *
 	 * May contain cause of failure in [cause] property.
-	 * @property [cause] Cause of installation failure. Always null on Android versions lower than Lollipop (5.0).
+	 * @property cause Cause of installation failure. Always null on Android versions lower than Lollipop (5.0).
 	 */
 	data class Failure(val cause: InstallFailureCause? = null) : InstallResult()
 
@@ -29,7 +29,7 @@ sealed class InstallResult {
 		/**
 		 * Converts Android's [PackageInstaller] status code to [InstallResult] object.
 		 */
-		fun getFromStatusCode(
+		fun fromStatusCode(
 			statusCode: Int,
 			message: String? = null,
 			otherPackageName: String? = null,
