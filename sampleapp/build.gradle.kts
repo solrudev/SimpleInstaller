@@ -8,7 +8,7 @@ plugins {
 
 android {
 	compileSdk = 32
-	buildToolsVersion = "32.0.0"
+	buildToolsVersion = "33.0.0"
 
 	defaultConfig {
 		applicationId = "io.github.solrudev.simpleinstaller.sampleapp"
@@ -44,7 +44,7 @@ android {
 
 dependencies {
 	kapt("androidx.databinding:databinding-compiler:$androidGradleVersion")
-	implementation("androidx.activity:activity-ktx:1.4.0")
-	implementation("com.google.android.material:material:1.5.0")
+	implementation("androidx.activity:activity-ktx:1.5.0")
+	implementation("com.google.android.material:material:1.6.1")
 	implementation(project(":simpleinstaller"))
 }

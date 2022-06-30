@@ -11,7 +11,7 @@ plugins {
 
 android {
 	compileSdk = 32
-	buildToolsVersion = "32.0.0"
+	buildToolsVersion = "33.0.0"
 
 	defaultConfig {
 		minSdk = 16
@@ -47,9 +47,9 @@ android {
 }
 
 dependencies {
-	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
-	implementation("androidx.appcompat:appcompat:1.4.1")
-	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
+	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3")
+	implementation("androidx.appcompat:appcompat:1.4.2")
+	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.0")
 	implementation("com.squareup.okio:okio:3.1.0")
 }
 
