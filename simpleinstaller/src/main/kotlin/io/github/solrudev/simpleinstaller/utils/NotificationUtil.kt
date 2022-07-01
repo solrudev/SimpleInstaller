@@ -30,14 +30,16 @@ internal val pendingIntentCancelCurrentFlags
 	}
 
 @JvmSynthetic
-internal fun showNotification(intent: PendingIntent, notificationId: Int, titleId: Int, messageId: Int) {
-	val channelId = SimpleInstaller.applicationContext.getString(R.string.ssi_notification_channel_id)
-	val title = SimpleInstaller.applicationContext.getString(titleId)
-	val message = SimpleInstaller.applicationContext.getString(messageId)
-	val notification = NotificationCompat.Builder(SimpleInstaller.applicationContext, channelId).apply {
+internal fun showNotification(intent: PendingIntent, notificationId: Int, titleId: Int, message: String) {
+	val channelId = applicationContext.getString(R.string.ssi_notification_channel_id)
+	val title = applicationContext.getString(titleId)
+	val notification = NotificationCompat.Builder(applicationContext, channelId).apply {
 		setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 		setContentTitle(title)
 		setContentText(message)
+		if (message.length > 28) {
+			setStyle(NotificationCompat.BigTextStyle().bigText(message))
+		}
 		setContentIntent(intent)
 		priority = NotificationCompat.PRIORITY_MAX
 		setDefaults(NotificationCompat.DEFAULT_ALL)

@@ -6,6 +6,7 @@ import java.io.FileInputStream
 
 class FileApkSource(private val apkFile: File) : ApkSource() {
 	override val length get() = apkFile.length()
+	override val file get() = apkFile
 	override fun openInputStream() = FileInputStream(apkFile)
 	override suspend fun getUri(): Uri = Uri.fromFile(apkFile)
 }

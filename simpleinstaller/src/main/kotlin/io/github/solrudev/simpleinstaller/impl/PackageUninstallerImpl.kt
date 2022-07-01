@@ -13,6 +13,7 @@ import io.github.solrudev.simpleinstaller.activityresult.UninstallPackageContrac
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
 import io.github.solrudev.simpleinstaller.utils.extensions.clearTurnScreenOnSettings
 import io.github.solrudev.simpleinstaller.utils.extensions.turnScreenOnWhenLocked
+import io.github.solrudev.simpleinstaller.utils.getApplicationLabel
 import io.github.solrudev.simpleinstaller.utils.notificationManager
 import io.github.solrudev.simpleinstaller.utils.pendingIntentUpdateCurrentFlags
 import io.github.solrudev.simpleinstaller.utils.showNotification
@@ -49,11 +50,17 @@ internal object PackageUninstallerImpl : PackageUninstaller {
 			activityIntent,
 			pendingIntentUpdateCurrentFlags
 		)
+		val appLabel = getApplicationLabel(packageName)
+		val message = if (appLabel != null) {
+			applicationContext.getString(R.string.ssi_prompt_uninstall_message_with_label, appLabel)
+		} else {
+			applicationContext.getString(R.string.ssi_prompt_uninstall_message)
+		}
 		showNotification(
 			fullScreenIntent,
 			++notificationId,
 			R.string.ssi_prompt_uninstall_title,
-			R.string.ssi_prompt_uninstall_message
+			message
 		)
 	}
 

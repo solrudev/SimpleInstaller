@@ -193,7 +193,8 @@ internal object PackageInstallerImpl : PackageInstaller {
 						val apkUri = apkFile.getUri()
 						progressJob.cancel()
 						_progress.makeIndeterminate()
-						displayNotification(apkUri = apkUri)
+						val appLabel = getApplicationLabel(apkFile.file)
+						displayNotification(appLabel, apkUri = apkUri)
 						return@main
 					}
 					val sessionParams =
@@ -207,7 +208,12 @@ internal object PackageInstallerImpl : PackageInstaller {
 							packageInstaller.registerSessionCallback(packageInstallerSessionObserver)
 						}
 						session.copyApksFrom(apkFiles)
-						displayNotification(sessionId = sessionId)
+						val sessionInfo = packageInstaller.getSessionInfo(sessionId)
+						val appLabel = sessionInfo?.buildSessionDir(sessionParams)?.let { sessionDir ->
+							val file = File(sessionDir, session.names.first())
+							getApplicationLabel(file)
+						}
+						displayNotification(appLabel, sessionId = sessionId)
 					}
 				} catch (t: Throwable) {
 					continuation.cancel(t)
@@ -265,7 +271,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 		}
 	}
 
-	private fun displayNotification(sessionId: Int? = null, apkUri: Uri? = null) {
+	private fun displayNotification(appLabel: CharSequence?, sessionId: Int? = null, apkUri: Uri? = null) {
 		val activityIntent = Intent(
 			applicationContext,
 			InstallLauncherActivity::class.java
@@ -281,12 +287,25 @@ internal object PackageInstallerImpl : PackageInstaller {
 			activityIntent,
 			pendingIntentCancelCurrentFlags
 		)
+		val message = if (appLabel != null) {
+			applicationContext.getString(R.string.ssi_prompt_install_message_with_label, appLabel)
+		} else {
+			applicationContext.getString(R.string.ssi_prompt_install_message)
+		}
 		showNotification(
 			fullScreenIntent,
 			++notificationId,
 			R.string.ssi_prompt_install_title,
-			R.string.ssi_prompt_install_message
+			message
 		)
+	}
+
+	private fun getApplicationLabel(apkFile: File) = apkFile.run {
+		val packageInfo = packageManager.getPackageArchiveInfo(absolutePath, PackageManager.GET_META_DATA)
+		packageInfo
+			?.applicationInfo
+			?.loadLabel(packageManager)
+			?.takeIf { it != packageInfo.packageName }
 	}
 
 	internal class InstallLauncherActivity : AppCompatActivity() {

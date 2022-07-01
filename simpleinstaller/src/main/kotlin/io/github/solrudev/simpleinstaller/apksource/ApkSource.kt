@@ -2,7 +2,7 @@ package io.github.solrudev.simpleinstaller.apksource
 
 import android.net.Uri
 import io.github.solrudev.simpleinstaller.PackageInstaller
-import io.github.solrudev.simpleinstaller.SimpleInstaller
+import io.github.solrudev.simpleinstaller.SimpleInstaller.applicationContext
 import io.github.solrudev.simpleinstaller.data.ProgressData
 import io.github.solrudev.simpleinstaller.utils.copy
 import kotlinx.coroutines.channels.BufferOverflow
@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 
 private const val TEMP_APK_FILE_NAME = "temp.apk"
@@ -44,6 +43,19 @@ abstract class ApkSource {
 	abstract val length: Long
 
 	/**
+	 * File which will be installed on API level < 21.
+	 */
+	open val file: File
+		// By default a temp copy is created
+		get() = tempApk
+
+	/**
+	 * Default temp APK file.
+	 */
+	private val tempApk: File
+		get() = File(applicationContext.externalCacheDir, TEMP_APK_FILE_NAME)
+
+	/**
 	 * Opens an [InputStream] for the provided APK source.
 	 */
 	abstract fun openInputStream(): InputStream?
@@ -57,7 +69,6 @@ abstract class ApkSource {
 	 * Clears created temporary files.
 	 */
 	open fun clearTempFiles() {
-		val tempApk = File(SimpleInstaller.applicationContext.externalCacheDir, TEMP_APK_FILE_NAME)
 		if (tempApk.exists()) tempApk.delete()
 	}
 
@@ -75,11 +86,10 @@ abstract class ApkSource {
 	 * @return [Uri] of the copy.
 	 */
 	protected suspend fun createTempCopy(): Uri {
-		val tempApk = File(SimpleInstaller.applicationContext.externalCacheDir, TEMP_APK_FILE_NAME)
 		if (tempApk.exists()) tempApk.delete()
 		tempApk.createNewFile()
 		val inputStream = openInputStream()
-		val outputStream = FileOutputStream(tempApk)
+		val outputStream = tempApk.outputStream()
 		copy(
 			requireNotNull(inputStream) { "APK InputStream was null." },
 			outputStream,
