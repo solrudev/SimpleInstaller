@@ -172,7 +172,7 @@ val hasActiveSession: Boolean
 ```
 </details>
 
-<details open>
+<details>
   <summary>Java</summary>
 
 ```java
