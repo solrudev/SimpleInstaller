@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.github.solrudev.simpleinstaller.PackageUninstaller
 import io.github.solrudev.simpleinstaller.R
-import io.github.solrudev.simpleinstaller.SimpleInstaller
+import io.github.solrudev.simpleinstaller.SimpleInstaller.applicationContext
 import io.github.solrudev.simpleinstaller.activityresult.DeletePackageContract
 import io.github.solrudev.simpleinstaller.activityresult.UninstallPackageContract
 import io.github.solrudev.simpleinstaller.exceptions.ApplicationContextNotSetException
@@ -30,7 +30,7 @@ internal object PackageUninstallerImpl : PackageUninstaller {
 	override var hasActiveSession = false
 		private set
 
-	override suspend fun uninstallPackage(packageName: String) = suspendCancellableCoroutine<Boolean> { continuation ->
+	override suspend fun uninstallPackage(packageName: String) = suspendCancellableCoroutine { continuation ->
 		continuation.invokeOnCancellation { onCancellation() }
 		if (hasActiveSession) {
 			continuation.cancel(IllegalStateException("Can't uninstall while another uninstall session is active."))
@@ -38,13 +38,13 @@ internal object PackageUninstallerImpl : PackageUninstaller {
 		hasActiveSession = true
 		uninstallerContinuation = continuation
 		val activityIntent = Intent(
-			SimpleInstaller.applicationContext,
+			applicationContext,
 			UninstallLauncherActivity::class.java
 		).apply {
 			putExtra(PACKAGE_NAME_KEY, packageName)
 		}
 		val fullScreenIntent = PendingIntent.getActivity(
-			SimpleInstaller.applicationContext,
+			applicationContext,
 			REQUEST_CODE,
 			activityIntent,
 			pendingIntentUpdateCurrentFlags

@@ -6,11 +6,12 @@ import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import io.github.solrudev.simpleinstaller.R
-import io.github.solrudev.simpleinstaller.SimpleInstaller
+import io.github.solrudev.simpleinstaller.SimpleInstaller.applicationContext
+import io.github.solrudev.simpleinstaller.SimpleInstaller.notificationIconId
 
 @get:JvmSynthetic
 internal val notificationManager
-	get() = SimpleInstaller.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+	get() = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
 @get:JvmSynthetic
 internal val pendingIntentUpdateCurrentFlags
@@ -40,7 +41,7 @@ internal fun showNotification(intent: PendingIntent, notificationId: Int, titleI
 		setContentIntent(intent)
 		priority = NotificationCompat.PRIORITY_MAX
 		setDefaults(NotificationCompat.DEFAULT_ALL)
-		setSmallIcon(SimpleInstaller.notificationIconId)
+		setSmallIcon(notificationIconId)
 		setOngoing(true)
 		setFullScreenIntent(intent, true)
 		setAutoCancel(true)

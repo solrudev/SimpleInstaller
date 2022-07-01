@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.DrawableRes
@@ -22,8 +23,12 @@ object SimpleInstaller {
 		get() = requireContextNotNull(_applicationContext)
 
 	@get:JvmSynthetic
-	internal val packageName: String
+	internal val installerPackageName: String
 		get() = applicationContext.packageName
+
+	@get:JvmSynthetic
+	internal val packageManager: PackageManager
+		get() = applicationContext.packageManager
 
 	@DrawableRes
 	@get:JvmSynthetic

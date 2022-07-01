@@ -18,7 +18,9 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import io.github.solrudev.simpleinstaller.PackageInstaller
 import io.github.solrudev.simpleinstaller.R
-import io.github.solrudev.simpleinstaller.SimpleInstaller
+import io.github.solrudev.simpleinstaller.SimpleInstaller.applicationContext
+import io.github.solrudev.simpleinstaller.SimpleInstaller.installerPackageName
+import io.github.solrudev.simpleinstaller.SimpleInstaller.packageManager
 import io.github.solrudev.simpleinstaller.activityresult.ActionInstallPackageContract
 import io.github.solrudev.simpleinstaller.apksource.ApkSource
 import io.github.solrudev.simpleinstaller.data.InstallFailureCause
@@ -81,7 +83,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 		}
 	}
 
-	private val actionInstallationStatus by lazy { "${SimpleInstaller.packageName}.INSTALLATION_STATUS" }
+	private val actionInstallationStatus by lazy { "${installerPackageName}.INSTALLATION_STATUS" }
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private val installerScope = CoroutineScope(Dispatchers.Default)
 	private val isInstallFinished = MutableStateFlow(false)
@@ -92,7 +94,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 
 	private val packageInstaller
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-		get() = SimpleInstaller.applicationContext.packageManager.packageInstaller
+		get() = packageManager.packageInstaller
 
 	private val usePackageInstallerApi
 		@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.LOLLIPOP)
@@ -265,7 +267,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 
 	private fun displayNotification(sessionId: Int? = null, apkUri: Uri? = null) {
 		val activityIntent = Intent(
-			SimpleInstaller.applicationContext,
+			applicationContext,
 			InstallLauncherActivity::class.java
 		).apply {
 			if (usePackageInstallerApi && sessionId != null) {
@@ -274,7 +276,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 			apkUri?.let { putExtra(APK_URI_KEY, it) }
 		}
 		val fullScreenIntent = PendingIntent.getActivity(
-			SimpleInstaller.applicationContext,
+			applicationContext,
 			REQUEST_CODE,
 			activityIntent,
 			pendingIntentCancelCurrentFlags
@@ -346,13 +348,13 @@ internal object PackageInstallerImpl : PackageInstaller {
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 		private fun commitSession() {
 			val receiverIntent = Intent(
-				SimpleInstaller.applicationContext,
+				applicationContext,
 				InstallationEventsReceiver::class.java
 			).apply {
 				action = actionInstallationStatus
 			}
 			val receiverPendingIntent = PendingIntent.getBroadcast(
-				SimpleInstaller.applicationContext,
+				applicationContext,
 				REQUEST_CODE,
 				receiverIntent,
 				pendingIntentUpdateCurrentFlags

@@ -3,7 +3,7 @@ package io.github.solrudev.simpleinstaller.utils.extensions
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.OpenableColumns
-import io.github.solrudev.simpleinstaller.SimpleInstaller
+import io.github.solrudev.simpleinstaller.SimpleInstaller.applicationContext
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -13,7 +13,7 @@ internal val Uri.length: Long
 		if (scheme == ContentResolver.SCHEME_FILE) {
 			return path?.let { File(it).length() } ?: -1L
 		}
-		val contentResolver = SimpleInstaller.applicationContext.contentResolver
+		val contentResolver = applicationContext.contentResolver
 		try {
 			contentResolver.openAssetFileDescriptor(this, "r")
 		} catch (e: FileNotFoundException) {
