@@ -7,13 +7,9 @@
     + [Gradle](#gradle)
 * [Usage](#usage)
     + [Installation](#installation)
-        - [Kotlin](#kotlin)
-        - [Java](#java)
         - [Install permission](#install-permission)
         - [ApkSource](#apksource)
     + [Uninstallation](#uninstallation)
-        - [Kotlin](#kotlin-1)
-        - [Java](#java-1)
 * [Sample app](#sample-app)
 * [License](#license)
 
@@ -41,22 +37,20 @@ implementation("io.github.solrudev:simpleinstaller:x.y.z")
 Replace "x.y.z" with the latest version.
 
 ## Usage
-First, you need to initialize SimpleInstaller. To do this, add the following line to your
-Application class' `onCreate()` method (valid for both Kotlin and Java):
+As an option, you can provide an icon for SimpleInstaller notifications:
 ```kotlin
-SimpleInstaller.initialize(this)
+SimpleInstaller.setNotificationIcon(R.drawable.your_notification_icon)
 ```
-Optionally, you can provide an icon for SimpleInstaller notifications:
-```kotlin
-SimpleInstaller.initialize(this, R.drawable.your_notification_icon)
-```
+`android.R.drawable.ic_dialog_alert` is used by default.
 
 ### Installation
 Installation functionality is provided by `PackageInstaller` interface.
 
 There are two separate methods for monolithic and split packages.
 
-#### Kotlin
+<details open>
+  <summary>Kotlin</summary>
+
 ```kotlin
 suspend fun installPackage(apkFile: TYPE): InstallResult
 ```
@@ -77,8 +71,11 @@ You can get if `PackageInstaller` has an active session through a property:
 ```kotlin
 val hasActiveSession: Boolean
 ```
+</details>
 
-#### Java
+<details>
+  <summary>Java</summary>
+
 ```java
 void installPackage(ApkSource apkFile, PackageInstaller.Callback callback)
 ```
@@ -118,6 +115,7 @@ Also it's possible to cancel current install session:
 ```java
 void cancel()
 ```
+</details>
 
 #### Install permission
 On Oreo and higher `PackageInstaller` sets an install reason `PackageManager.INSTALL_REASON_USER`,
@@ -154,7 +152,9 @@ scheme), `AssetFileDescriptor` and `File`. You can provide your own implementati
 ### Uninstallation
 Uninstallation functionality is provided by `PackageUninstaller` interface.
 
-#### Kotlin
+<details open>
+  <summary>Kotlin</summary>
+
 ```kotlin
 suspend fun uninstallPackage(packageName: String): Boolean
 ```
@@ -170,8 +170,11 @@ You can get if `PackageUninstaller` has an active session through a property:
 ```kotlin
 val hasActiveSession: Boolean
 ```
+</details>
 
-#### Java
+<details open>
+  <summary>Java</summary>
+
 ```java
 void uninstallPackage(String packageName, PackageUninstaller.Callback callback)
 ```
@@ -195,6 +198,7 @@ Also it's possible to cancel current uninstall session:
 ```java
 void cancel()
 ```
+</details>
 
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application
