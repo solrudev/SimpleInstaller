@@ -50,6 +50,7 @@ dependencies {
 	api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3")
 	implementation("androidx.appcompat:appcompat:1.4.2")
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.0")
+	implementation("androidx.startup:startup-runtime:1.1.1")
 	implementation("com.squareup.okio:okio:3.1.0")
 }
 

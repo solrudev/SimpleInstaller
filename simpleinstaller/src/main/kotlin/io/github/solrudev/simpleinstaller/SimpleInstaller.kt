@@ -37,6 +37,8 @@ object SimpleInstaller {
 		override fun onLowMemory() {}
 	}
 
+	private val lock = Any()
+
 	/**
 	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
 	 *
@@ -45,19 +47,52 @@ object SimpleInstaller {
 	 * Example: `SimpleInstaller.initialize(this)`
 	 */
 	@JvmStatic
-	@JvmOverloads
+	@Deprecated(message = "Manual initialization is deprecated. SimpleInstaller now uses App Startup library.")
+	@Suppress("UNUSED_PARAMETER")
+	fun initialize(applicationContext: Context) {
+	}
+
+	/**
+	 * Initializes `SimpleInstaller` with provided application context and, optionally, notifications icon.
+	 *
+	 * This should be called in your Application class' `onCreate()` method.
+	 *
+	 * Example: `SimpleInstaller.initialize(this)`
+	 */
+	@JvmStatic
+	@Deprecated(
+		message = "Manual initialization is deprecated. SimpleInstaller now uses App Startup library.",
+		replaceWith = ReplaceWith(expression = "SimpleInstaller.setNotificationIcon(notificationIconId)")
+	)
+	@Suppress("UNUSED_PARAMETER")
 	fun initialize(
 		applicationContext: Context,
-		@DrawableRes notificationIconId: Int = android.R.drawable.ic_dialog_alert
+		@DrawableRes notificationIconId: Int
 	) {
-		if (_applicationContext != null) {
-			throw SimpleInstallerReinitializeException()
-		}
-		_applicationContext = applicationContext.applicationContext
+		// For compatibility reasons
 		this.notificationIconId = notificationIconId
-		createNotificationChannel()
-		val application = _applicationContext as? Application
-		application?.registerComponentCallbacks(configurationChangesCallback)
+	}
+
+	/**
+	 * Sets an icon for SimpleInstaller notifications. By default its value is equal to
+	 * [android.R.drawable.ic_dialog_alert].
+	 */
+	@JvmStatic
+	fun setNotificationIcon(@DrawableRes notificationIcon: Int) {
+		notificationIconId = notificationIcon
+	}
+
+	@JvmSynthetic
+	internal fun initializeInternal(context: Context) {
+		synchronized(lock) {
+			if (_applicationContext != null) {
+				throw SimpleInstallerReinitializeException()
+			}
+			_applicationContext = context.applicationContext
+			createNotificationChannel()
+			val application = _applicationContext as? Application
+			application?.registerComponentCallbacks(configurationChangesCallback)
+		}
 	}
 
 	private fun createNotificationChannel() {

@@ -29,6 +29,16 @@
 			android:showWhenLocked="true"
 			tools:ignore="UnusedAttribute" />
 
+		<provider
+			android:name="androidx.startup.InitializationProvider"
+			android:authorities="${applicationId}.androidx-startup"
+			android:exported="false"
+			tools:node="merge">
+			<meta-data
+				android:name="io.github.solrudev.simpleinstaller.SimpleInstallerInitializer"
+				android:value="androidx.startup" />
+		</provider>
+
 		<receiver
 			android:name=".impl.InstallationEventsReceiver"
 			android:exported="false" />
