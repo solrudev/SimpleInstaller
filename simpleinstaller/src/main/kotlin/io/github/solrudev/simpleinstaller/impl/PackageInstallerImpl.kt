@@ -33,9 +33,8 @@ import io.github.solrudev.simpleinstaller.utils.extensions.clearTurnScreenOnSett
 import io.github.solrudev.simpleinstaller.utils.extensions.turnScreenOnWhenLocked
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.*
+import java.io.File
 import kotlin.coroutines.resume
 import android.content.pm.PackageInstaller as AndroidPackageInstaller
 
@@ -85,15 +84,11 @@ internal object PackageInstallerImpl : PackageInstaller {
 	private val actionInstallationStatus by lazy { "${SimpleInstaller.packageName}.INSTALLATION_STATUS" }
 	private val actionInstallPackageContract = ActionInstallPackageContract()
 	private val installerScope = CoroutineScope(Dispatchers.Default)
+	private val isInstallFinished = MutableStateFlow(false)
 	private var notificationId = 18475
 	private var currentApkSources: Array<out ApkSource> = emptyArray()
 	private var activityFirstCreated = true
 	private lateinit var installerContinuation: CancellableContinuation<InstallResult>
-
-	private val installFinishedCallback = MutableSharedFlow<Unit>(
-		extraBufferCapacity = 1,
-		onBufferOverflow = BufferOverflow.DROP_OLDEST
-	)
 
 	private val packageInstaller
 		@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -254,7 +249,7 @@ internal object PackageInstallerImpl : PackageInstaller {
 	} catch (_: ApplicationContextNotSetException) {
 	} finally {
 		CoroutineScope(installerContinuation.context + NonCancellable).launch {
-			installFinishedCallback.emit(Unit)
+			isInstallFinished.value = true
 		}
 		currentApkSources = emptyArray()
 		activityFirstCreated = true
@@ -322,11 +317,14 @@ internal object PackageInstallerImpl : PackageInstaller {
 		override fun onCreate(savedInstanceState: Bundle?) {
 			super.onCreate(savedInstanceState)
 			turnScreenOnWhenLocked()
-			lifecycleScope.launch {
-				installFinishedCallback
-					.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
-					.collect { finish() }
-			}
+			isInstallFinished
+				.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+				.filter { it }
+				.onEach {
+					isInstallFinished.value = false
+					finish()
+				}
+				.launchIn(lifecycleScope)
 			if (savedInstanceState != null) return
 			if (activityFirstCreated) {
 				activityFirstCreated = false
