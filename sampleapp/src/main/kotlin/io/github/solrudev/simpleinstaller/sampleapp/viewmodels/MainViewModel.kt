@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+private val TAG = MainViewModel::class.java.name
+
 class MainViewModel : ViewModel() {
 
 	private var installJob: Job? = null
@@ -57,12 +59,12 @@ class MainViewModel : ViewModel() {
 					is InstallResult.Success -> _text.value = R.string.installed_successfully
 					is InstallResult.Failure -> {
 						_text.value = R.string.install_failed
-						result.cause?.message?.let { Log.i(this@MainViewModel::class.java.name, it) }
+						Log.i(TAG, result.toString())
 					}
 				}
 			} catch (t: Throwable) {
 				_text.value = if (t !is CancellationException) {
-					Log.e(this@MainViewModel::class.java.name, "", t)
+					Log.e(TAG, "", t)
 					R.string.install_failed
 				} else {
 					R.string.install_canceled

@@ -14,7 +14,9 @@ sealed class InstallResult {
 	/**
 	 * Install succeeded.
 	 */
-	object Success : InstallResult()
+	object Success : InstallResult() {
+		override fun toString() = "STATUS_SUCCESS"
+	}
 
 	/**
 	 * Install failed.
@@ -22,7 +24,11 @@ sealed class InstallResult {
 	 * May contain cause of failure in [cause] property.
 	 * @property cause Cause of installation failure. Always null on Android versions lower than Lollipop (5.0).
 	 */
-	data class Failure(val cause: InstallFailureCause? = null) : InstallResult()
+	data class Failure(val cause: InstallFailureCause? = null) : InstallResult() {
+
+		override fun toString() = "INSTALL_FAILURE" +
+				if (cause != null) " | cause = $cause" else ""
+	}
 
 	companion object {
 
