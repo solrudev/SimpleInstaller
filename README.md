@@ -200,6 +200,36 @@ void cancel()
 ```
 </details>
 
+## Testing
+`PackageInstaller` and `PackageUninstaller` are interfaces, so you can provide your own fake
+implementation for tests. For example, you could create an implementation of `PackageInstaller`
+which will always return `InstallResult.Failure` with `InstallFailureCause.Storage` cause:
+```kotlin
+class FailingPackageInstaller : PackageInstaller {
+
+	override val hasActiveSession = false
+	override val progress = MutableSharedFlow<ProgressData>()
+
+	private val result = InstallResult.Failure(
+		InstallFailureCause.Storage("Insufficient storage.")
+	)
+
+	override suspend fun installSplitPackage(vararg apkFiles: ApkSource) = result
+
+	override fun installSplitPackage(vararg apkFiles: ApkSource, callback: PackageInstaller.Callback) {
+		callback.onFailure(result.cause)
+	}
+
+	override suspend fun installPackage(apkFile: ApkSource) = result
+
+	override fun installPackage(apkFile: ApkSource, callback: PackageInstaller.Callback) {
+		callback.onFailure(result.cause)
+	}
+
+	override fun cancel() {}
+}
+```
+
 ## Sample app
 There's a simple sample app available. It can install chosen APK file and uninstall an application
 selected from the installed apps list. Go
