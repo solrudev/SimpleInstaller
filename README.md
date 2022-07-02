@@ -10,6 +10,7 @@
         - [Install permission](#install-permission)
         - [ApkSource](#apksource)
     + [Uninstallation](#uninstallation)
+* [Testing](#testing)
 * [Sample app](#sample-app)
 * [License](#license)
 
