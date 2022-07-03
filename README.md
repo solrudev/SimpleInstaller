@@ -142,6 +142,7 @@ SimpleInstaller provides an abstract `ApkSource` class with the following public
 ```kotlin
 val progress: SharedFlow<ProgressData>
 abstract val length: Long
+open val file: File
 abstract fun openInputStream(): InputStream?
 abstract suspend fun getUri(): Uri
 open fun clearTempFiles()
